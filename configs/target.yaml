@@ -8,3 +8,5 @@ prepay_zero_balance_codes: ["01"]
 censor_zero_balance_codes: ["15", "16", "96"]
 performance_cutoff: "2026-03-01"
 covid_window: {start: "2020-03-01", end: "2021-12-01"}
+# Exclude longer internal missing-month runs from the PD sample (D006).
+max_internal_gap_months: 2

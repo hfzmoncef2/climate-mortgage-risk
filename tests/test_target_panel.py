@@ -50,6 +50,13 @@ HISTORIES = {
     ],  # paid off after the window
 }
 
+HISTORIES.update(
+    {
+        "013": [("200503", "00", ""), ("200507", "00", "")],
+        "014": [("200505", "00", ""), ("200506", "00", "")],
+    }
+)
+
 EXPECTED = {
     "001": ("default", 1),
     "002": ("default", 1),
@@ -64,6 +71,8 @@ EXPECTED = {
     "011": ("prepaid", 0),
     "012": ("performing", 0),
 }
+
+EXPECTED.update({"013": ("performing", 0), "014": ("performing", 0)})
 
 
 def perf_line(loan_id, period, status, zbc, zb_date=""):
@@ -122,7 +131,7 @@ def test_pd_sample_is_labelled_loans_only(interim, tmp_path):
         f"SELECT count(default_24m), count(*) FILTER (WHERE in_pd_sample) "
         f"FROM read_parquet('{path}')"
     ).fetchone()
-    assert labelled == in_sample == 10
+    assert (labelled, in_sample) == (12, 11)
 
 
 def test_panel_counts(interim, tmp_path):
@@ -134,7 +143,7 @@ def test_panel_counts(interim, tmp_path):
     by_period = {r[0]: r[1:] for r in rows}
     assert date(2005, 2, 1) not in by_period  # months before first payment are dropped
     # 2005-05: 001 (03), 003 (02 + loss exit), 006, 007, 009, 010, 012 (00)
-    assert by_period[date(2005, 5, 1)] == (7, 2, 2, 1, 0, 1)
+    assert by_period[date(2005, 5, 1)] == (8, 2, 2, 1, 0, 1)
     # 2005-04: 001 (02), 002 (RA), 003 (01), 004 (prepaid), 005, 006, 007, 009, 011, 012
     assert by_period[date(2005, 4, 1)] == (10, 3, 2, 1, 1, 0)
 
@@ -260,3 +269,35 @@ def test_internal_gap_is_counted_and_allowed(tmp_path):
         assert con.execute(
             "SELECT window_months_missing FROM read_parquet(?)", [str(path)]
         ).fetchone() == (2,)
+
+
+def test_gap_measures(interim, tmp_path):
+    path = target.run(interim, tmp_path / "processed", tmp_path / "s.md", config())
+    rows = duckdb.sql(
+        f"SELECT loan_id, start_gap_months, max_internal_gap_months, long_internal_gap "
+        f"FROM read_parquet('{path}')"
+    ).fetchall()
+    gaps = {loan_id[-3:]: rest for loan_id, *rest in rows}
+    assert gaps["006"] == [0, 0, False]  # complete history
+    assert gaps["010"] == [0, 1, False]  # April missing: tolerated
+    assert gaps["013"] == [0, 3, True]  # April-June missing: excluded from the PD sample
+    assert gaps["014"] == [2, 0, False]  # seasoned acquisition: tolerated
+
+
+@pytest.mark.parametrize("status, label, eligible", [("00", 0, False), ("03", 1, True)])
+def test_long_gap_excludes_only_non_default_labels(tmp_path, status, label, eligible):
+    interim = build(
+        tmp_path,
+        [orig_row("F05Q1TEST001", "750", "36", "432")],
+        [
+            perf_line("F05Q1TEST001", "200503", status, ""),
+            perf_line("F05Q1TEST001", "200507", "00", ""),
+        ],
+    )
+    path = target.run(interim, tmp_path / "processed", tmp_path / "s.md", config())
+    with duckdb.connect() as con:
+        row = con.execute(
+            "SELECT default_24m, long_internal_gap, in_pd_sample FROM read_parquet(?)",
+            [str(path)],
+        ).fetchone()
+    assert row == (label, True, eligible)

@@ -106,8 +106,10 @@ Every label requires a window ending on or before the cutoff, even for early def
 or payoffs, to avoid recent-vintage selection bias.
 Prepayment is a competing non-default outcome; transfers and incomplete windows are
 censored. Events after the cutoff cannot affect labels. Internal missing months are counted; loans observed at or after window end may
-be labelled performing despite gaps. A missing-month exclusion threshold is still
-pending review. Exits use `zero_balance_date` (reporting month as fallback), with
+be labelled performing despite gaps. Leading gaps are tolerated; internal runs longer than two months set
+`long_internal_gap` and exclude only loans labelled 0 from the PD sample (D006).
+Observed defaults remain eligible subject to the other sample restrictions.
+The threshold is configured in `configs/target.yaml`. Exits use `zero_balance_date` (reporting month as fallback), with
 the latest non-null exit code selected by reporting month. Earlier exits take
 precedence over later observed default statuses (D004-D005).
 Do not use outcome, event-date or other post-origination fields as model predictors.

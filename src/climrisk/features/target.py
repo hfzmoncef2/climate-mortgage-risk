@@ -86,6 +86,9 @@ def loans_query(cfg: dict) -> str:
     loss = sql_codes(cfg["loss_zero_balance_codes"])
     prepay = sql_codes(cfg["prepay_zero_balance_codes"])
     transfer = sql_codes(cfg["censor_zero_balance_codes"])
+    max_gap = int(cfg["max_internal_gap_months"])
+    if max_gap < 0:
+        raise ValueError("max_internal_gap_months must be nonnegative")
     return f"""
 WITH loan_window AS (
     SELECT
@@ -122,6 +125,36 @@ window_status AS (
       AND p.period <= DATE '{cutoff}'
     GROUP BY p.loan_id
 ),
+gap_rows AS (
+    SELECT
+        loan_id,
+        period,
+        lag(period) OVER (PARTITION BY loan_id ORDER BY period) AS prev_period
+    FROM perf
+    WHERE period <= DATE '{cutoff}'
+),
+gaps AS (
+    -- start gap: months between the first payment and the first record (seasoned
+    --   acquisitions; leading gaps are tolerated under the D006 acquisition assumption)
+    -- internal gap: longest run of missing months between two records, when the run
+    --   starts inside the window (could hide a default that cured, D006)
+    SELECT
+        g.loan_id,
+        greatest(
+            0, date_diff('month', w.first_payment_date, min(g.period))
+        ) AS start_gap_months,
+        coalesce(
+            max(date_diff('month', g.prev_period, g.period) - 1) FILTER (
+                WHERE g.prev_period >= w.first_payment_date
+                  AND g.prev_period < w.window_end
+            ),
+            0
+        ) AS max_internal_gap_months
+    FROM gap_rows g
+    JOIN loan_window w USING (loan_id)
+    WHERE g.period >= w.first_payment_date
+    GROUP BY g.loan_id, w.first_payment_date
+),
 combined AS (
     SELECT
         o.* EXCLUDE (vantage_score),
@@ -135,11 +168,14 @@ combined AS (
         s.default_status_period,
         coalesce(s.window_months_observed, 0) AS window_months_observed,
         coalesce(s.disaster_dlq_in_window, false) AS disaster_dlq_in_window,
-        coalesce(s.forbearance_in_window, false) AS forbearance_in_window
+        coalesce(s.forbearance_in_window, false) AS forbearance_in_window,
+        gp.start_gap_months,
+        gp.max_internal_gap_months
     FROM orig o
     JOIN loan_window w USING (loan_id)
     LEFT JOIN history h USING (loan_id)
     LEFT JOIN window_status s USING (loan_id)
+    LEFT JOIN gaps gp USING (loan_id)
 ),
 labelled AS (
     SELECT
@@ -174,7 +210,8 @@ SELECT
     (coalesce(harp = 'Y', false) OR pre_harp_loan_id IS NOT NULL) AS is_harp,
     year(first_payment_date) - vintage NOT IN (0, 1) AS date_anomaly,
     (first_payment_date <= DATE '{covid_end}' AND window_end >= DATE '{covid_start}')
-        AS overlaps_covid
+        AS overlaps_covid,
+    coalesce(max_internal_gap_months > {max_gap}, false) AS long_internal_gap
 FROM labelled
 """
 
@@ -185,7 +222,9 @@ def build_loans(con: duckdb.DuckDBPyConnection, cfg: dict) -> None:
     con.execute("""
         ALTER TABLE loans ADD COLUMN in_pd_sample BOOLEAN;
         UPDATE loans SET in_pd_sample = default_24m IS NOT NULL
-            AND NOT is_harp AND NOT date_anomaly AND NOT overlaps_covid AND zip3 IS NOT NULL;
+            AND NOT is_harp AND NOT date_anomaly AND NOT overlaps_covid
+            -- A gap can hide a default; retain observed defaults (D006).
+            AND NOT (long_internal_gap AND default_24m = 0) AND zip3 IS NOT NULL;
     """)
 
 
@@ -220,10 +259,21 @@ def summary_markdown(con: duckdb.DuckDBPyConnection) -> str:
                              ELSE '7+' END AS missing_months,
                         count(*) AS loans
                  FROM loans WHERE outcome = 'performing' GROUP BY 1 ORDER BY 1"""),
+                "## Gaps in the monthly history (labelled loans)",
+                table("""SELECT CASE WHEN start_gap_months = 0 THEN '0'
+                             WHEN start_gap_months <= 6 THEN '1-6'
+                             ELSE '7+' END AS start_gap,
+                        CASE WHEN max_internal_gap_months = 0 THEN '0'
+                             WHEN max_internal_gap_months <= 2 THEN '1-2'
+                             ELSE '3+' END AS max_internal_gap,
+                        count(*) AS loans,
+                        sum(default_24m) AS defaults
+                 FROM loans WHERE default_24m IS NOT NULL GROUP BY ALL ORDER BY ALL"""),
                 "## PD sample exclusions (labelled loans)",
                 table("""SELECT count(*) FILTER (WHERE is_harp) AS harp,
                         count(*) FILTER (WHERE date_anomaly) AS date_anomaly,
                         count(*) FILTER (WHERE overlaps_covid) AS overlaps_covid,
+                        count(*) FILTER (WHERE long_internal_gap) AS long_internal_gap,
                         count(*) FILTER (WHERE zip3 IS NULL) AS unknown_zip3,
                         count(*) FILTER (WHERE in_pd_sample) AS in_pd_sample
                  FROM loans WHERE default_24m IS NOT NULL"""),

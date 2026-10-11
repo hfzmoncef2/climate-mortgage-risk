@@ -46,7 +46,7 @@ Record the date, context, alternatives, rationale and consequences for each deci
 - Check first-payment calendar year against vintage; a difference of zero or one
   is expected. Other differences are warnings for review.
 
-## D006 — Typed ingestion and ZIP3
+## D008 — Typed ingestion and ZIP3
 
 - ZIP codes in these samples contain three characters; `000` is unknown.
 - Preserve categorical codes as text, including `00`, `01` and `RA`; map `XX` to NULL.
@@ -116,7 +116,7 @@ Record the date, context, alternatives, rationale and consequences for each deci
   or after the cutoff. Apply causal-sample restrictions at analysis time.
 - This panel contains delinquency stocks and exit flows, not first-default incidence.
 - Eligibility is evaluated per loan window: do not exclude whole vintages by assumption.
-- D006 and D007 preserve the earlier ingestion/environment decisions under unique IDs.
+- D008 and D007 preserve the earlier ingestion/environment decisions under unique IDs.
 
 ## Phase 2 cutoff correction and gap review (pending)
 
@@ -154,3 +154,26 @@ Record the date, context, alternatives, rationale and consequences for each deci
   3-6 = 3,349; 7+ = 11,192. Large gaps need particular review.
 - This revision supersedes the prior internal-gap censoring rule and the
   earlier pending gap-review observations. No commit or push yet.
+
+## D006 — Gaps in the monthly history
+
+- Measure gaps for every loan, using records available through the cutoff.
+- `start_gap_months`: months from first payment to the first record on or after
+  first payment. Leading gaps are tolerated under the seasoned-acquisition
+  assumption. The earlier diagnostic found 11,192 performing loans with 7+
+  missing leading months and no internal gap; it does not prove their cause.
+- `max_internal_gap_months`: longest missing run between records whose previous
+  observation is inside the window. The run may extend beyond window end.
+- Flag runs longer than 2 months as `long_internal_gap`; exclude only loans
+  labelled 0 from `in_pd_sample`. Retain all loans, outcomes and labels in the dataset.
+- Threshold: `configs/target.yaml`, `max_internal_gap_months: 2`.
+  Counts are reported in `reports/target_summary.md`.
+- Phase 7 caveat: seasoned acquisitions survive until acquisition (left truncation).
+  Assess `start_gap_months` as a feature or sensitivity check; no claim that an
+  unobserved early default is impossible is established by these data alone.
+- This rule supersedes the pending threshold notes above. The earlier typed
+  ingestion decision is renumbered D008 to keep decision IDs unique.
+
+- The exclusion applies only to loans labelled 0: a gap can hide a default, but an
+  observed default is certain. Currently 4 loans have internal gaps > 2 months,
+  all observed defaults, so none is excluded by this rule.
