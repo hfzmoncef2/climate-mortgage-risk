@@ -22,15 +22,19 @@ Record the date, context, alternatives, rationale and consequences for each deci
   July 2026 layout and performance cutoff 2026-03-31.
 - Rationale: freeze source versions before ingestion. Validation uses March 2026 as its cutoff.
 
-## D002 — ZIP-to-county mapping (proposal, not final)
+## D002 — ZIP3 to county weights
 
-- Proposed source: Census 2020 ZCTA-to-county area relationships, weighted by
-  ZCTA housing counts from the Census API.
-- Alternatives: HUD-USPS Crosswalk and Geocorr 2022. Reported HTTP 403 errors
-  from Switzerland have not been reproduced in this session.
-- ZCTA differs from USPS ZIP; area allocation introduces measurement error that
-  must be quantified rather than assumed small.
-- Inspect empty ZCTA rows and validate compatibility with Freddie Mac ZIP3 data.
+- Source: 2010 ZCTA-to-County Relationship File (www2.census.gov), HUPT = housing
+  units of each ZCTA-county part.
+- Weight(ZIP3, county) = housing units of the ZIP3 in the county / housing units of the ZIP3.
+- Why: actual housing counts, no area approximation or API key; 2010 is mid-sample.
+- Rejected: HUD-USPS crosswalk and Geocorr (user-reported HTTP 403 from Switzerland);
+  2020 relationship file plus Census API (key activation failed).
+- Map post-2010 FEMA county codes to 2010 codes using `county_recode` in climate.yaml.
+  For split areas, the predecessor mapping is an approximation, not an exact boundary match.
+- Manual weight: ZIP3 772 (Houston P.O. boxes, no ZCTA) -> Harris County (48201).
+  Territories 008 and 969 remain unmatched.
+- Limits: ZCTA differs from USPS ZIP; static 2010 housing shares are applied to all years.
 
 ## D003 — Vintage definition
 
@@ -177,3 +181,34 @@ Record the date, context, alternatives, rationale and consequences for each deci
 - The exclusion applies only to loans labelled 0: a gap can hide a default, but an
   observed default is certain. Currently 4 loans have internal gaps > 2 months,
   all observed defaults, so none is excluded by this rule.
+
+## D009 — Disaster events (treatment)
+
+- Source: OpenFEMA Disaster Declarations Summaries v2, downloaded and cached by
+  `climrisk.ingest.fema`. Reference: https://www.fema.gov/openfema-data-page/disaster-declarations-summaries-v2
+- Main definition: DR major disasters, incident types Hurricane, Tropical Storm,
+  Coastal Storm, Typhoon, Flood, Dam/Levee Break and Fire, with IA or IH household
+  assistance. Retain both assistance fields to cover their historical transition.
+- Broad definition: add Severe Storm, Tornado, Straight-Line Winds and Mud/Landslide,
+  with no household-assistance requirement.
+- Exclude Biological, EM and FM declarations and statewide county code 000.
+- Event month is the month of incidentBeginDate, preserving the UTC calendar date.
+- Deduplicate disaster/county/start-month combinations before weighted aggregation.
+- Hit share counts each affected county only once per month; event count preserves
+  distinct disasters in the same county-month.
+
+## D010 — Historical climate exposure (replaces NRI as the main measure)
+
+- Use expected qualifying disasters per home over the preceding 120 months,
+  weighted by ZIP3-county housing allocation; exclude the current month.
+- Grid starts January 1990, providing a full lookback from January 2000 onward.
+- The user reports NRI download restrictions from Switzerland; these have not
+  been independently reproduced. A recent NRI snapshot also cannot represent
+  information contemporaneously available for early loan vintages.
+- NRI remains a possible later robustness source, rather than the primary measure.
+- Limitations: 2010 housing/geography weights are static and retrospective; FEMA
+  declarations can be revised or declared after incident onset. Excluding future
+  incident months does not make this an exact reconstruction of information known
+  at origination. Assess declaration-date lags and historical-weight sensitivity.
+- ZCTA housing counts approximate USPS ZIP geography. ZIP3 aggregation cannot
+  identify which individual properties were affected or establish causal effects.

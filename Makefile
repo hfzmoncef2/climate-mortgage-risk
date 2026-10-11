@@ -12,10 +12,13 @@ setup:
 data:
 	uv run --frozen python -m climrisk.ingest.freddie --all
 	uv run --frozen python -m climrisk.ingest.validate
+	uv run --frozen python -m climrisk.ingest.fema
+	uv run --frozen python -m climrisk.ingest.census
 
 features:
 	uv run --frozen python -m climrisk.features.target
 	uv run --frozen python -m climrisk.features.panel
+	uv run --frozen python -m climrisk.features.climate
 
 causal:
 	@echo "TODO phases 5-6: event study, pricing"

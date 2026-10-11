@@ -1,0 +1,43 @@
+# Phase 3 sources and definitions: D002, D009-D010.
+sources:
+  fema_declarations_url: https://www.fema.gov/api/open/v2/DisasterDeclarationsSummaries.csv
+  zcta_county_url: https://www2.census.gov/geo/docs/maps-data/data/rel/zcta_county_rel_10.txt
+# P.O.-box-only ZIP3 without a ZCTA. Territories 008 and 969 remain unmatched.
+zip3_manual_weights:
+  "772": {"48201": 1.0}  # Houston P.O. boxes -> Harris County, TX
+events:
+  declaration_types:
+  - DR
+  main:
+    incident_types:
+    - Hurricane
+    - Tropical Storm
+    - Coastal Storm
+    - Typhoon
+    - Flood
+    - Dam/Levee Break
+    - Fire
+    require_household_assistance: true
+  broad:
+    incident_types:
+    - Hurricane
+    - Tropical Storm
+    - Coastal Storm
+    - Typhoon
+    - Flood
+    - Dam/Levee Break
+    - Fire
+    - Severe Storm
+    - Tornado
+    - Straight-Line Winds
+    - Mud/Landslide
+    require_household_assistance: false
+exposure:
+  lookback_months: 120
+  grid_start: '1990-01-01'
+  grid_end: '2026-03-01'
+county_recode:
+  '46102': '46113'
+  02158: '02270'
+  '02063': '02261'
+  '02066': '02261'

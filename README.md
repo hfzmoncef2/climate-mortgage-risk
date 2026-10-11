@@ -58,7 +58,7 @@ Data and the virtual environment are excluded from Git.
 
 - `configs/`: source schemas, future split dates and method parameters.
 - `data/{raw,interim,processed}/`: local data, entirely excluded from Git.
-- `src/climrisk/ingest/`: Freddie Mac ingestion and validation; FEMA, crosswalk and FRED placeholders.
+- `src/climrisk/ingest/`: Freddie Mac ingestion and validation; FEMA and Census ingestion; crosswalk and FRED placeholders.
 - `src/climrisk/features/`: loan default targets, ZIP3-month panels and an exposure placeholder.
 - `src/climrisk/causal/`: event study and pricing placeholders.
 - `src/climrisk/models/`: scorecard, GBM, calibration and evaluation placeholders.
@@ -113,3 +113,28 @@ The threshold is configured in `configs/target.yaml`. Exits use `zero_balance_da
 the latest non-null exit code selected by reporting month. Earlier exits take
 precedence over later observed default statuses (D004-D005).
 Do not use outcome, event-date or other post-origination fields as model predictors.
+
+## Phase 3: climate data
+
+No registration or API key is required. The pipeline downloads the public Census
+2010 ZCTA-to-county relationship file and uses HUPT housing counts directly.
+Cached downloads are reused; ingestion CLIs accept `--refresh`.
+
+```sh
+uv run --frozen python -m climrisk.ingest.fema
+uv run --frozen python -m climrisk.ingest.census
+uv run --frozen python -m climrisk.features.climate
+```
+
+`make data` includes FEMA and Census ingestion; `make features` includes climate
+construction. Source URLs and event definitions are in `configs/climate.yaml`.
+Outputs are `data/processed/zip3_county_weights.parquet` and
+`data/processed/zip3_month_climate.parquet`, with an aggregate report in
+`reports/climate_summary.md`.
+
+The main disaster definition requires household assistance; the broad definition
+adds storm types without that requirement. Exposure sums weighted events over the
+previous 120 months, excluding the current month. Housing weights use Census 2010
+HUPT housing counts for each ZCTA-county part. Static 2010 weights and revised
+FEMA declarations remain retrospective inputs; see D002 and D009-D010 for limitations.
+NRI is reserved for a potential later robustness analysis.
