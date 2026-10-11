@@ -7,12 +7,23 @@ name = "climate-mortgage-risk"
 version = "0.1.0"
 description = "Analyse du risque climatique des prêts hypothécaires"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 license = "MIT"
-dependencies = []
+dependencies = [
+    "duckdb>=1.5.6",
+    "openpyxl>=3.1.5",
+    "polars>=2.0.0",
+    "pyarrow>=26.0.0",
+    "pyyaml>=6.0.3",
+]
 
 [dependency-groups]
-dev = ["pytest>=8", "ruff>=0.9", "pre-commit>=4"]
+dev = [
+    "pytest>=8",
+    "ruff>=0.9",
+    "pre-commit>=4",
+    "ipykernel>=7.4.0",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -22,5 +33,8 @@ testpaths = ["tests"]
 pythonpath = ["src"]
 
 [tool.ruff]
-line-length = 88
-target-version = "py311"
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]

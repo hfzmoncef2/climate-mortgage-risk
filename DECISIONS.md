@@ -19,3 +19,28 @@ la décision, sa justification et ses conséquences.
 - Diffuser le code sous licence MIT et rendre le dépôt public selon la phase 0.
 - Conserver les étapes du pipeline comme squelettes explicites.
 - Les inscriptions Clarity et HUD USER restent personnelles et à finaliser sur leurs portails.
+
+## D001 — Version des données Freddie Mac (2026-10-11)
+
+- Confirmé localement : 21 archives sample 2004–2024, avec 42 fichiers origination/performance.
+- Documents locaux : `file_layout_july_2026.xlsx` et `general_user_guide_july_2026.pdf`.
+- Contrôle initial : 31 champs origination et 35 performance sur la première ligne de chacune des 21 années.
+- Métadonnées annoncées, à vérifier dans les documents : fichiers datés du 2026-09-04,
+  layout juillet 2026 et cutoff 2026-03-31.
+- Pourquoi : figer la version des sources avant l'ingestion.
+
+## D002 — Correspondance ZIP → comté (proposition à valider)
+
+- Proposition : relation Census 2020 ZCTA → county (part de surface), pondérée
+  par les logements de chaque ZCTA (Census 2020, API).
+- Alternatives : HUD-USPS Crosswalk et Geocorr 2022. Les erreurs 403 signalées
+  depuis la Suisse ne sont pas vérifiées dans cette session.
+- Limite : ZCTA ≠ ZIP USPS ; l'approximation surfacique et son erreur restent à quantifier.
+- À faire : examiner les ZCTA vides et la compatibilité des ZIP disponibles chez Freddie Mac.
+- Aucun choix final ni hypothèse d'erreur faible sans validation empirique.
+
+## D003 — Configuration Python de phase 1
+
+- Python 3.12 via uv ; Ruff E/F/I/B/UP, longueur de ligne 100.
+- Ajouter uniquement les outils d'ingestion et de notebooks à ce stade.
+- Conserver le nom de distribution `climate-mortgage-risk` et le package `climrisk`.

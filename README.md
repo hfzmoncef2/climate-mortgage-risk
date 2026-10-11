@@ -1,4 +1,4 @@
-# Climate Mortgage Risk
+# Is Climate Risk Priced in Mortgage Credit?
 
 ## Résultats
 
@@ -6,7 +6,7 @@ Projet en cours d'initialisation. Aucun résultat empirique disponible à ce sta
 
 ## Reproduire
 
-Python 3.11 ou supérieur.
+Python 3.12, installé et sélectionné par uv via `.python-version`.
 
 Installer [uv](https://docs.astral.sh/uv/getting-started/installation/), puis :
 
@@ -47,7 +47,7 @@ Stocker les téléchargements sous `data/raw/` et les jetons dans un fichier
 
 Les commandes `make data`, `make features`, `make causal`, `make models` et
 `make report` sont réservées aux étapes du pipeline à implémenter.
-Elles échouent explicitement tant que ces étapes ne sont pas disponibles.
+Elles affichent un TODO. `make all` les énumère, mais ne produit encore aucun résultat.
 
 ## Organisation
 
@@ -64,3 +64,18 @@ Elles échouent explicitement tant que ces étapes ne sont pas disponibles.
 
 Les modules sont des squelettes ; aucune ingestion ni estimation n'est encore implémentée.
 Les décisions méthodologiques sont consignées dans `DECISIONS.md`.
+
+## Développement
+
+`make setup`, puis `make test` et `make lint`. Dans VS Code, sélectionner
+`.venv/bin/python` avec « Python: Select Interpreter » si un ancien interpréteur
+reste sélectionné. Le chemin par défaut est configuré dans `.vscode/settings.json`.
+
+Les données locales sont les samples Freddie Mac 2004–2024. Les analyses futures
+combineront ces prêts, les déclarations FEMA et le FEMA National Risk Index.
+Les dépendances de phase 1 sont DuckDB, Polars, PyArrow, PyYAML et openpyxl ;
+ipykernel est disponible pour les notebooks.
+
+Les hooks corrigent le style, les espaces et les fins de fichiers, et refusent
+les fichiers ajoutés de plus de 1000 Ko. Cette limite ne détecte pas toutes les
+données : `data/` doit rester ignoré, et le contenu des commits doit être vérifié.

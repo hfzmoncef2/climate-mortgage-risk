@@ -1,13 +1,14 @@
 repos:
-  - repo: local
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.0
     hooks:
       - id: ruff-check
-        name: Ruff lint
-        entry: uv run --frozen ruff check
-        language: system
-        types_or: [python, pyi]
+        args: [--fix]
       - id: ruff-format
-        name: Ruff format
-        entry: uv run --frozen ruff format --check
-        language: system
-        types_or: [python, pyi]
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+        args: ["--maxkb=1000"]
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
