@@ -45,9 +45,9 @@ Stocker les téléchargements sous `data/raw/` et les jetons dans un fichier
 
 
 
-Les commandes `make data`, `make features`, `make causal`, `make models` et
-`make report` sont réservées aux étapes du pipeline à implémenter.
-Elles affichent un TODO. `make all` les énumère, mais ne produit encore aucun résultat.
+`make data` convertit les samples Freddie Mac disponibles en Parquet typé.
+Les étapes `features`, `causal`, `models` et `report` affichent encore un TODO.
+`make all` exécute l’ingestion puis ces étapes réservées.
 
 ## Organisation
 
@@ -62,7 +62,7 @@ Elles affichent un TODO. `make all` les énumère, mais ne produit encore aucun 
 - `tests/` : futurs tests de chaque transformation de données.
 - `reports/` : figures et rapport LaTeX.
 
-Les modules sont des squelettes ; aucune ingestion ni estimation n'est encore implémentée.
+L’ingestion Freddie Mac est implémentée ; les autres modules restent des squelettes.
 Les décisions méthodologiques sont consignées dans `DECISIONS.md`.
 
 ## Développement
@@ -79,3 +79,21 @@ ipykernel est disponible pour les notebooks.
 Les hooks corrigent le style, les espaces et les fins de fichiers, et refusent
 les fichiers ajoutés de plus de 1000 Ko. Cette limite ne détecte pas toutes les
 données : `data/` doit rester ignoré, et le contenu des commits doit être vérifié.
+
+## Ingestion Freddie Mac
+
+```sh
+uv run --frozen python -m climrisk.ingest.freddie --years 2005
+make data
+```
+
+Les fichiers `sample_orig_YYYY.txt` et `sample_perf_YYYY.txt` sont lus depuis
+`data/raw/freddie/`. Les sorties sont `data/interim/freddie/origination/YYYY.parquet`
+et `data/interim/freddie/performance/YYYY.parquet` (compression ZSTD).
+Le schéma est défini dans `configs/freddie_schema.yaml` : espaces et codes inconnus
+sont nettoyés, les types sont convertis strictement, et les dates mensuelles
+représentent le premier du mois. Les codes catégoriels et le ZIP3 restent en texte.
+La colonne `vintage` conserve l’année du fichier source.
+Chaque table est écrite dans un fichier temporaire puis renommée ; les sorties
+existantes sont remplacées à la relance. L’atomicité concerne chaque fichier,
+pas l’ensemble des deux tables ou des années. Les données restent ignorées par Git.

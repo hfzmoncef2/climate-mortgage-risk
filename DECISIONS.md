@@ -44,3 +44,12 @@ la décision, sa justification et ses conséquences.
 - Python 3.12 via uv ; Ruff E/F/I/B/UP, longueur de ligne 100.
 - Ajouter uniquement les outils d'ingestion et de notebooks à ce stade.
 - Conserver le nom de distribution `climate-mortgage-risk` et le package `climrisk`.
+
+## D004 — Ingestion typée et ZIP3
+
+- Corriger le code postal : les samples publient un ZIP3 de 3 caractères ; `000` est inconnu.
+- Conserver les codes catégoriels en texte, dont `00`, `01`, `RA` ; convertir `XX` en NULL.
+- Nettoyer les espaces, vides et sentinelles avant les conversions strictes DuckDB.
+- Convertir YYYYMM en DATE au premier du mois et ajouter `vintage` (année du fichier).
+- Écrire un Parquet ZSTD par table et année via un fichier temporaire, nettoyé en cas d’erreur.
+- Validation 2005 : 50 000 lignes origination et 3 877 176 lignes performance.

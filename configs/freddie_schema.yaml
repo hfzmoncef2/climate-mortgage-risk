@@ -29,8 +29,8 @@ origination:
   - {position: 16, name: amort_type,         source_name: "Amortization Type",                dtype: string,  missing_codes: []}
   - {position: 17, name: state,              source_name: "Property State",                   dtype: string,  missing_codes: []}
   - {position: 18, name: property_type,      source_name: "Property Type",                    dtype: string,  missing_codes: ["99"]}
-  - {position: 19, name: postal_code,        source_name: "Postal Code",                      dtype: string,  missing_codes: ["000", "00000"],
-     notes: "Seuls les 3 premiers chiffres sont réels (ex. 30400 → ZIP3 304) ; les 2 derniers sont masqués à 00. 000 = inconnu."}
+  - {position: 19, name: postal_code,        source_name: "Postal Code",                      dtype: string,  missing_codes: ["000"],
+     notes: "ZIP3 : seuls les 3 premiers chiffres du code postal sont publiés (vie privée). 000 = inconnu."}
   - {position: 20, name: loan_id,            source_name: "Loan Identifier",                  dtype: string,  missing_codes: []}
   - {position: 21, name: loan_purpose,       source_name: "Loan Purpose",                     dtype: string,  missing_codes: ["9"]}
   - {position: 22, name: orig_term,          source_name: "Original Loan Term",               dtype: Int16,   missing_codes: []}

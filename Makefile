@@ -10,7 +10,7 @@ setup:
 	uv run --frozen pre-commit install
 
 data:
-	@echo "TODO phase 1 : ingestion Freddie Mac"
+	uv run --frozen python -m climrisk.ingest.freddie --all
 
 features:
 	@echo "TODO phase 2-3 : cible, panel, exposition climat"
