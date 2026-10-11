@@ -27,7 +27,7 @@ models:
 	@echo "TODO phases 7-8: PD model, stress test"
 
 report:
-	@echo "TODO phase 9: figures and report"
+	uv run --frozen python -m climrisk.viz.eda
 
 lint:
 	uv run --frozen ruff check .

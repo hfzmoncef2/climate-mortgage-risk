@@ -1,7 +1,14 @@
 # Is Climate Risk Priced in Mortgage Credit?
 
-Work in progress: Freddie Mac loan-level data, FEMA disaster declarations,
-and the FEMA National Risk Index. No empirical modeling results are available yet.
+![Delinquency around Hurricane Harvey](reports/figures/fig3_harvey_delinquency.png)
+
+Raw Houston-area 60+ day delinquency rose from 0.70% in August 2017 to 3.94%
+three months later, compared with 1.14% to 1.45% in the Texas comparison group.
+These are descriptive rates; the causal event study is in progress.
+
+Work in progress: a reproducible pipeline combining 1.05 million Freddie Mac loans
+(62 million loan-months), FEMA disaster declarations and Census housing data.
+See [the exploratory figures and source tables](reports/eda.md).
 
 ## Reproduce
 
@@ -138,3 +145,12 @@ previous 120 months, excluding the current month. Housing weights use Census 201
 HUPT housing counts for each ZCTA-county part. Static 2010 weights and revised
 FEMA declarations remain retrospective inputs; see D002 and D009-D010 for limitations.
 NRI is reserved for a potential later robustness analysis.
+
+## Exploratory figures (Phase 4)
+
+Run `make report` after `make features` to generate five PNG figures and their
+aggregate source tables in `reports/eda.md`. The annual disaster figure also reads
+`data/interim/fema/declarations.parquet` to count each county once per year.
+The Harvey comparison uses Texas ZIP3 with at least 90% main-definition impact in
+August 2017, against Texas ZIP3 with no broad-definition impact within three months
+before or after the event. These are descriptive comparisons, without causal controls.

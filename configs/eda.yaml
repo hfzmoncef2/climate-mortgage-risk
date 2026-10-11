@@ -1,0 +1,11 @@
+# Raw descriptive patterns; no causal claims.
+harvey:
+  event_month: "2017-08-01"
+  months_before: 12
+  months_after: 24
+  treated_min_hit_share: 0.9
+  texas_zip3_prefixes: ["75", "76", "77", "78", "79", "885"]
+  control_clean_months: 3
+exposure_bins: [0, 0.5, 1.5, 3.0]
+fico_bins: [620, 680, 720, 760]
+ltv_bins: [60, 70, 80, 90]
