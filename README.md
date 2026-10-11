@@ -1,99 +1,86 @@
 # Is Climate Risk Priced in Mortgage Credit?
 
-## Résultats
+Work in progress: Freddie Mac loan-level data, FEMA disaster declarations,
+and the FEMA National Risk Index. No empirical modeling results are available yet.
 
-Projet en cours d'initialisation. Aucun résultat empirique disponible à ce stade.
+## Reproduce
 
-## Reproduire
-
-Python 3.12, installé et sélectionné par uv via `.python-version`.
-
-Installer [uv](https://docs.astral.sh/uv/getting-started/installation/), puis :
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then run:
 
 ```sh
-uv sync --frozen
-uv run --frozen pre-commit install
+make setup
 make check
 ```
 
-`uv.lock` fixe les versions des dépendances. `make setup` réinstalle cet
-environnement et les hooks. Ruff contrôle le style et pytest les tests.
+Python 3.12 is selected by `.python-version`. Dependencies are pinned in `uv.lock`.
+Phase 1 uses DuckDB, Polars, PyArrow, PyYAML and openpyxl. Development tools include
+pytest, Ruff, pre-commit and ipykernel. Later modeling libraries will be added as needed.
 
-## Phase 0 — Setup
+## Data access
 
-- [x] Architecture, README et journal des décisions.
-- [x] Licence MIT pour le code ; les données conservent leurs conditions propres.
-- [x] Données exclues de Git dès le premier commit.
-- [x] Environnement uv, Ruff, pytest et hooks pre-commit.
-- [x] Cibles Make du pipeline réservées.
-- [ ] Inscription personnelle Clarity (Freddie Mac).
-- [ ] Inscription personnelle HUD USER.
+Register for [Freddie Mac Clarity](https://capitalmarkets.freddiemac.com/clarity)
+to access the [Single-Family Loan-Level Dataset](https://www.freddiemac.com/research/datasets/sf-loanlevel-dataset).
+Place the 2004-2024 sample files in `data/raw/freddie/`:
+`sample_orig_YYYY.txt` and `sample_perf_YYYY.txt`.
+Reference documents belong in `data/raw/freddie/docs/`.
+Data is not redistributed in this repository and retains its original terms.
 
-### Accès aux données
+The [HUD-USPS crosswalk page](https://www.huduser.gov/portal/datasets/usps_crosswalk.html)
+provides registration and API access instructions for a potential geographic mapping source.
+Geographic allocation remains subject to validation; Freddie Mac samples expose ZIP3 only.
+Keep credentials in an ignored local `.env` file and downloads under `data/`.
 
-Pour Freddie Mac, ouvrir [Clarity](https://capitalmarkets.freddiemac.com/clarity)
-et créer un compte personnel pour accéder au
-[Single-Family Loan-Level Dataset](https://www.freddiemac.com/research/datasets/sf-loanlevel-dataset).
-Terminer la validation de l'adresse e-mail et les conditions d'accès sur le site.
-
-Pour les correspondances géographiques, ouvrir la page
-[HUD-USPS Crosswalk](https://www.huduser.gov/portal/datasets/usps_crosswalk.html)
-et suivre « Register Here ». Pour une utilisation par API, suivre le lien
-vers la page API afin de créer le compte et obtenir un jeton.
-Stocker les téléchargements sous `data/raw/` et les jetons dans un fichier
-`.env` local (ignoré par Git). Ne jamais les placer dans un notebook versionné.
-
-
-
-`make data` convertit les samples Freddie Mac disponibles en Parquet typé.
-Les étapes `features`, `causal`, `models` et `report` affichent encore un TODO.
-`make all` exécute l’ingestion puis ces étapes réservées.
-
-## Organisation
-
-- `configs/` : schémas des colonnes, dates de split et paramètres.
-- `data/{raw,interim,processed}/` : données locales, entièrement exclues de Git.
-- `src/climrisk/ingest/` : Freddie Mac, FEMA, correspondances géographiques et FRED.
-- `src/climrisk/features/` : cible, panel et exposition.
-- `src/climrisk/causal/` : event study et pricing.
-- `src/climrisk/models/` : scorecard, GBM, calibration et évaluation.
-- `src/climrisk/stress/` : scénarios et pertes attendues.
-- `notebooks/` : exploration uniquement, fichiers préfixés `01_`, `02_`, etc.
-- `tests/` : futurs tests de chaque transformation de données.
-- `reports/` : figures et rapport LaTeX.
-
-L’ingestion Freddie Mac est implémentée ; les autres modules restent des squelettes.
-Les décisions méthodologiques sont consignées dans `DECISIONS.md`.
-
-## Développement
-
-`make setup`, puis `make test` et `make lint`. Dans VS Code, sélectionner
-`.venv/bin/python` avec « Python: Select Interpreter » si un ancien interpréteur
-reste sélectionné. Le chemin par défaut est configuré dans `.vscode/settings.json`.
-
-Les données locales sont les samples Freddie Mac 2004–2024. Les analyses futures
-combineront ces prêts, les déclarations FEMA et le FEMA National Risk Index.
-Les dépendances de phase 1 sont DuckDB, Polars, PyArrow, PyYAML et openpyxl ;
-ipykernel est disponible pour les notebooks.
-
-Les hooks corrigent le style, les espaces et les fins de fichiers, et refusent
-les fichiers ajoutés de plus de 1000 Ko. Cette limite ne détecte pas toutes les
-données : `data/` doit rester ignoré, et le contenu des commits doit être vérifié.
-
-## Ingestion Freddie Mac
+## Ingestion and quality checks
 
 ```sh
 uv run --frozen python -m climrisk.ingest.freddie --years 2005
 make data
 ```
 
-Les fichiers `sample_orig_YYYY.txt` et `sample_perf_YYYY.txt` sont lus depuis
-`data/raw/freddie/`. Les sorties sont `data/interim/freddie/origination/YYYY.parquet`
-et `data/interim/freddie/performance/YYYY.parquet` (compression ZSTD).
-Le schéma est défini dans `configs/freddie_schema.yaml` : espaces et codes inconnus
-sont nettoyés, les types sont convertis strictement, et les dates mensuelles
-représentent le premier du mois. Les codes catégoriels et le ZIP3 restent en texte.
-La colonne `vintage` conserve l’année du fichier source.
-Chaque table est écrite dans un fichier temporaire puis renommée ; les sorties
-existantes sont remplacées à la relance. L’atomicité concerne chaque fichier,
-pas l’ensemble des deux tables ou des années. Les données restent ignorées par Git.
+`make data` ingests every available source year and runs quality checks.
+Outputs are ZSTD-compressed Parquet files under
+`data/interim/freddie/{origination,performance}/YYYY.parquet`.
+Filenames retain the source year. Every row carries identifier-derived `vintage`
+and `orig_quarter`, plus `source_year` for traceability (decision D003).
+
+The YAML schema defines strict types, monthly dates and unknown-value sentinels.
+Whitespace and missing codes become NULL before conversion. Categorical codes and
+ZIP3 remain text. Monthly dates use the first day of the month.
+Each output is written to a temporary file and atomically renamed; temporary files
+are cleaned up on errors. Rerunning replaces existing outputs. Atomicity applies
+to each file, not the whole run.
+
+Validation writes aggregate statistics to `reports/data_quality.md`.
+Blocking failures cause a nonzero exit status; warnings remain visible for review.
+Data and the virtual environment are excluded from Git.
+
+## Project structure
+
+- `configs/`: source schemas, future split dates and method parameters.
+- `data/{raw,interim,processed}/`: local data, entirely excluded from Git.
+- `src/climrisk/ingest/`: Freddie Mac ingestion and validation; FEMA, crosswalk and FRED placeholders.
+- `src/climrisk/features/`: target, panel and exposure placeholders.
+- `src/climrisk/causal/`: event study and pricing placeholders.
+- `src/climrisk/models/`: scorecard, GBM, calibration and evaluation placeholders.
+- `src/climrisk/stress/`: scenario and expected loss placeholders.
+- `notebooks/`: exploration only, with `01_`, `02_`, etc. filename prefixes.
+- `tests/`: synthetic-data transformation tests and repository safeguards.
+- `reports/`: figures, aggregate quality report and LaTeX report skeleton.
+
+`make all` runs ingestion and validation, then prints TODO messages for the
+remaining pipeline stages. It does not yet run a complete research pipeline.
+Methodological choices and unresolved questions are recorded in `DECISIONS.md`.
+
+## Development
+
+Use `make test`, `make lint` and `make format`.
+Pre-commit checks lint, formatting, trailing whitespace, final newlines and newly
+added files larger than 1000 KB. The size guard does not detect all sensitive data;
+keep `data/` ignored and review staged changes.
+VS Code defaults to `.venv/bin/python`; select it explicitly if an old interpreter persists.
+Conda automatic base activation is disabled locally; an existing terminal may still
+need `deactivate` followed by `conda deactivate`.
+
+## License
+
+Code is licensed under MIT. Source datasets retain their own access and licensing terms.

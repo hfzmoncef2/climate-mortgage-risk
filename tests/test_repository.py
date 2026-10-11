@@ -1,4 +1,4 @@
-"""Garde-fous pour éviter la publication accidentelle des données."""
+"""Guard against accidental publication of local data."""
 
 import subprocess
 from pathlib import Path
@@ -26,4 +26,4 @@ def test_no_data_is_tracked():
         cwd=ROOT,
         check=True,
     )
-    assert not result.stdout.strip(), "Des données sont suivies par Git."
+    assert not result.stdout.strip(), "Data files are tracked by Git."

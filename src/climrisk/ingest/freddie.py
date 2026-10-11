@@ -1,11 +1,11 @@
-"""Ingestion des fichiers sample Freddie Mac (SFLLD) : texte brut -> Parquet typé.
+"""Ingest Freddie Mac SFLLD sample files into typed Parquet.
 
-Pour chaque millésime, lit sample_orig_YYYY.txt et sample_perf_YYYY.txt, applique le
-schéma de configs/freddie_schema.yaml (noms, types, codes "inconnu" -> NULL) et écrit :
+Read sample_orig_YYYY.txt and sample_perf_YYYY.txt for each source year,
+apply configs/freddie_schema.yaml (names, types, unknown codes -> NULL), and write:
     data/interim/freddie/origination/YYYY.parquet
     data/interim/freddie/performance/YYYY.parquet
 
-Usage :
+Usage:
     uv run --frozen python -m climrisk.ingest.freddie --years 2005
     uv run --frozen python -m climrisk.ingest.freddie --all
 """
@@ -30,8 +30,7 @@ TABLES = {
     "performance": "sample_perf_{year}.txt",
 }
 
-# Types du schéma -> types DuckDB. On choisit le plus petit type entier suffisant :
-# moins de mémoire et des fichiers Parquet plus légers.
+# Schema types -> DuckDB types. Use compact integers to reduce memory and storage.
 DUCKDB_TYPES = {
     "string": "VARCHAR",
     "Int8": "TINYINT",
@@ -44,32 +43,29 @@ log = logging.getLogger(__name__)
 
 
 def load_schema(path: Path = SCHEMA_PATH) -> dict:
-    """Charge le schéma YAML et vérifie que les positions vont de 1 à N sans trou."""
+    """Load the YAML schema and require consecutive column positions from 1 to N."""
     with open(path, encoding="utf-8") as f:
         schema = yaml.safe_load(f)
     for table in TABLES:
         positions = [col["position"] for col in schema[table]]
         if positions != list(range(1, len(positions) + 1)):
-            raise ValueError(f"{table} : positions manquantes ou dans le désordre")
+            raise ValueError(f"{table} : missing or unordered positions")
         unknown = {col["dtype"] for col in schema[table]} - set(DUCKDB_TYPES) - {"yyyymm"}
         if unknown:
-            raise ValueError(f"{table} : types inconnus {unknown}")
+            raise ValueError(f"{table} : unknown types {unknown}")
     return schema
 
 
 def _sql_str(value: object) -> str:
-    """Transforme une valeur Python en littéral SQL entre apostrophes."""
+    """Escape a Python value as a single-quoted SQL literal."""
     return "'" + str(value).replace("'", "''") + "'"
 
 
 def column_expression(col: dict) -> str:
-    """Expression SQL qui nettoie et type une colonne lue en texte brut.
+    """Build a SQL expression to clean and cast a raw text column.
 
-    1. TRIM : enlève les espaces parasites.
-    2. Vide ou code "inconnu" (9999, 999, XX...) -> NULL.
-    3. Conversion vers le type final ; YYYYMM -> DATE (1er du mois).
-    Les conversions sont strictes : une valeur inattendue fait échouer l'ingestion
-    au lieu de devenir silencieusement NULL.
+    Trim whitespace, replace empty and unknown codes with NULL, and cast strictly.
+    YYYYMM becomes the first day of the month. Unexpected values raise errors.
     """
     name = col["name"]
     raw = f'TRIM("{name}")'
@@ -87,13 +83,21 @@ def column_expression(col: dict) -> str:
 
 
 def build_query(columns: list[dict], source: Path, year: int) -> str:
-    """Requête qui lit un fichier brut (tout en texte) et renvoie la table typée."""
+    """Read a raw file as text and return typed columns.
+
+    D003: derive vintage and origination quarter from PYYQnXXXXXXX.
+    Preserve the source file year as source_year for traceability.
+    The century pivot supports 1990-2089, including the current 2004-2024 samples.
+    """
     names = ", ".join(f"{_sql_str(col['name'])}: 'VARCHAR'" for col in columns)
     select = ",\n    ".join(column_expression(col) for col in columns)
+    yy = """CAST(substr(TRIM("loan_id"), 2, 2) AS SMALLINT)"""
     return f"""
 SELECT
     {select},
-    CAST({year} AS SMALLINT) AS vintage
+    CAST({yy} + CASE WHEN {yy} >= 90 THEN 1900 ELSE 2000 END AS SMALLINT) AS vintage,
+    CAST(substr(TRIM("loan_id"), 5, 1) AS TINYINT) AS orig_quarter,
+    CAST({year} AS SMALLINT) AS source_year
 FROM read_csv(
     {_sql_str(source)},
     delim = '|',
@@ -110,7 +114,7 @@ def ingest_year(
     raw_dir: Path = RAW_DIR,
     out_dir: Path = OUT_DIR,
 ) -> dict[str, int]:
-    """Convertit un millésime (origination + performance) en Parquet. Renvoie les lignes écrites."""
+    """Convert both tables for a source year to Parquet and return their row counts."""
     counts = {}
     for table, pattern in TABLES.items():
         source = raw_dir / pattern.format(year=year)
@@ -119,8 +123,7 @@ def ingest_year(
 
         target = out_dir / table / f"{year}.parquet"
         target.parent.mkdir(parents=True, exist_ok=True)
-        # On écrit dans un fichier temporaire puis on renomme : si le script plante,
-        # aucun Parquet à moitié écrit ne reste dans data/interim/.
+        # Write to a temporary file, then atomically replace this table’s output.
         tmp = target.with_name(target.name + ".tmp")
 
         start = time.perf_counter()
@@ -135,32 +138,32 @@ def ingest_year(
             f"SELECT count(*) FROM read_parquet({_sql_str(target)})"
         ).fetchone()[0]
         elapsed = time.perf_counter() - start
-        log.info("%s %d : %s lignes (%.1f s)", table, year, f"{counts[table]:,}", elapsed)
+        log.info("%s %d : %s rows (%.1f s)", table, year, f"{counts[table]:,}", elapsed)
     return counts
 
 
 def available_years(raw_dir: Path = RAW_DIR) -> list[int]:
-    """Millésimes pour lesquels un fichier d'origination est présent."""
+    """Return source years with an available origination file."""
     return sorted(int(p.stem.split("_")[-1]) for p in raw_dir.glob("sample_orig_*.txt"))
 
 
 def main(argv: list[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(description="Ingestion Freddie Mac -> Parquet")
+    parser = argparse.ArgumentParser(description="Ingest Freddie Mac samples into Parquet")
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--years", type=int, nargs="+", help="ex. --years 2005 2006")
-    group.add_argument("--all", action="store_true", help="tous les millésimes de data/raw")
+    group.add_argument("--years", type=int, nargs="+", help="e.g. --years 2005 2006")
+    group.add_argument("--all", action="store_true", help="all source years in data/raw")
     args = parser.parse_args(argv)
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     schema = load_schema()
     years = available_years() if args.all else args.years
     if not years:
-        raise SystemExit(f"Aucun fichier sample_orig_*.txt dans {RAW_DIR}")
+        raise SystemExit(f"No sample_orig_*.txt files in {RAW_DIR}")
 
     with duckdb.connect() as con:
         for year in years:
             ingest_year(con, schema, year)
-    log.info("Terminé : %d millésime(s)", len(years))
+    log.info("Completed: %d source year(s)", len(years))
 
 
 if __name__ == "__main__":

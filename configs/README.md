@@ -1,5 +1,4 @@
 # Configuration
 
-Ajouter ici les schémas des colonnes, les dates de séparation temporelle
-(train / validation / test) et les paramètres des méthodes.
-Aucune valeur par défaut méthodologique n'est encore fixée.
+Source column schemas live here. Define temporal train/validation/test splits
+and method parameters before implementing analyses.

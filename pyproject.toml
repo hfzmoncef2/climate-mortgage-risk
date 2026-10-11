@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "climate-mortgage-risk"
 version = "0.1.0"
-description = "Analyse du risque climatique des prêts hypothécaires"
+description = "Climate risk analysis of mortgage credit"
 readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT"

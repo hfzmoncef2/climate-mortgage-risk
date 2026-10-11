@@ -1,4 +1,4 @@
-"""Ingestion des séries FRED.
+"""FRED time series ingestion.
 
-Squelette : implémentation à venir.
+Placeholder: implementation pending.
 """

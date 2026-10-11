@@ -1,4 +1,4 @@
-"""Correspondances entre identifiants géographiques.
+"""Geographic identifier crosswalks.
 
-Squelette : implémentation à venir.
+Placeholder: implementation pending.
 """

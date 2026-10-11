@@ -1,4 +1,4 @@
-"""Évaluation des modèles.
+"""Model evaluation.
 
-Squelette : implémentation à venir.
+Placeholder: implementation pending.
 """

@@ -1,1 +1,1 @@
-"""Stress."""
+"""Stress components."""

@@ -1,4 +1,4 @@
-"""Ingestion des données FEMA.
+"""FEMA data ingestion.
 
-Squelette : implémentation à venir.
+Placeholder: implementation pending.
 """

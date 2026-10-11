@@ -1,4 +1,4 @@
-"""Estimation des études événementielles.
+"""Event study estimation.
 
-Squelette : implémentation à venir.
+Placeholder: implementation pending.
 """

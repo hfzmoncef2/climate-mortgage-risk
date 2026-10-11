@@ -1,4 +1,4 @@
-# Données : ne jamais versionner, même les sous-dossiers.
+# Never version data, including subdirectories.
 /data/
 .env
 .env.*

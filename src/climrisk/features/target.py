@@ -1,4 +1,4 @@
-"""Construction de la variable cible.
+"""Default target construction.
 
-Squelette : implémentation à venir.
+Placeholder: implementation pending.
 """

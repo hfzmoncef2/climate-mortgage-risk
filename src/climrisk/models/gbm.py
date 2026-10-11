@@ -1,4 +1,4 @@
-"""Modèle de gradient boosting.
+"""Gradient boosting model.
 
-Squelette : implémentation à venir.
+Placeholder: implementation pending.
 """

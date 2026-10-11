@@ -1,4 +1,4 @@
-"""Construction du panel de prêts.
+"""Loan panel construction.
 
-Squelette : implémentation à venir.
+Placeholder: implementation pending.
 """

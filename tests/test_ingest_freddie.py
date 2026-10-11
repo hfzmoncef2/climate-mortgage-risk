@@ -1,4 +1,4 @@
-"""Tests d'ingestion sur données fictives uniquement."""
+"""Ingestion tests using synthetic data only."""
 
 from datetime import date
 
@@ -109,9 +109,9 @@ def test_types_and_dates(ingested):
     rows = read(
         con,
         out / "origination" / f"{YEAR}.parquet",
-        "loan_id, first_payment_date, orig_rate, vintage",
+        "loan_id, first_payment_date, orig_rate, vintage, orig_quarter, source_year",
     )
-    assert rows[0] == ("F05Q1TEST001", date(2005, 3, 1), 5.875, YEAR)
+    assert rows[0] == ("F05Q1TEST001", date(2005, 3, 1), 5.875, 2005, 1, YEAR)
 
 
 def test_performance_codes_stay_strings(ingested):
@@ -141,3 +141,21 @@ def test_malformed_value_fails_loudly(tmp_path):
 
     assert not list((tmp_path / "out").rglob("*.parquet"))
     assert not list((tmp_path / "out").rglob("*.tmp"))
+
+
+def test_vintage_comes_from_loan_id_not_file(tmp_path):
+    """D003: a 2009 Q1 loan appears in the 2008 source file."""
+    raw = tmp_path / "raw"
+    raw.mkdir()
+    fields = orig_row("F09Q1TEST001", "750", "36", "432").split("|")
+    fields[1], fields[3] = "200903", "203902"
+    (raw / "sample_orig_2008.txt").write_text("|".join(fields) + "\n")
+    (raw / "sample_perf_2008.txt").write_text(perf_row("F09Q1TEST001", "200904", "00") + "\n")
+    with duckdb.connect() as con:
+        ingest_year(con, load_schema(), 2008, raw_dir=raw, out_dir=tmp_path / "out")
+        for table in ("origination", "performance"):
+            path = tmp_path / "out" / table / "2008.parquet"
+            row = con.execute(
+                "SELECT vintage, orig_quarter, source_year FROM read_parquet(?)", [str(path)]
+            ).fetchone()
+            assert row == (2009, 1, 2008)

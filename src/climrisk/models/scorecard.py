@@ -1,4 +1,4 @@
-"""Modèle de scorecard.
+"""Scorecard model.
 
-Squelette : implémentation à venir.
+Placeholder: implementation pending.
 """

@@ -1,4 +1,4 @@
-"""Analyse causale de la tarification.
+"""Causal analysis of mortgage pricing.
 
-Squelette : implémentation à venir.
+Placeholder: implementation pending.
 """

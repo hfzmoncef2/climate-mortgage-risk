@@ -1,7 +1,5 @@
 # Tests
 
-`make test` lance pytest. Les premiers tests vérifient que les données sont
-ignorées et qu'aucun fichier de `data/` n'est suivi par Git.
-
-Ajouter ensuite des tests pour chaque transformation implémentée : schémas,
-clés de jointure, valeurs manquantes, cible et absence de fuite temporelle.
+Run `make test`. Synthetic fixtures cover ingestion and quality checks. Repository
+guards check that local data remains ignored and untracked. Add tests for joins,
+target construction, missing values and temporal leakage as these stages are built.

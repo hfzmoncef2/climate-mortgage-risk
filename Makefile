@@ -1,9 +1,9 @@
 .PHONY: help setup data features causal models report lint format test check all
 
 help:
-	@echo "setup : installer l'environnement et les hooks pre-commit"
-	@echo "lint / format / test / check : vérifications du projet"
-	@echo "data / features / causal / models / report : étapes à implémenter"
+	@echo "setup: install dependencies and pre-commit hooks"
+	@echo "lint / format / test / check: project checks"
+	@echo "data: ingest and validate; other pipeline stages: pending"
 
 setup:
 	uv sync --frozen
@@ -11,18 +11,19 @@ setup:
 
 data:
 	uv run --frozen python -m climrisk.ingest.freddie --all
+	uv run --frozen python -m climrisk.ingest.validate
 
 features:
-	@echo "TODO phase 2-3 : cible, panel, exposition climat"
+	@echo "TODO phases 2-3: target, panel, climate exposure"
 
 causal:
-	@echo "TODO phase 5-6 : event study, pricing"
+	@echo "TODO phases 5-6: event study, pricing"
 
 models:
-	@echo "TODO phase 7-8 : modele de PD, stress test"
+	@echo "TODO phases 7-8: PD model, stress test"
 
 report:
-	@echo "TODO phase 9 : figures et rapport"
+	@echo "TODO phase 9: figures and report"
 
 lint:
 	uv run --frozen ruff check .

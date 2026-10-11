@@ -1,4 +1,4 @@
-"""Calibration des probabilités.
+"""Probability calibration.
 
-Squelette : implémentation à venir.
+Placeholder: implementation pending.
 """

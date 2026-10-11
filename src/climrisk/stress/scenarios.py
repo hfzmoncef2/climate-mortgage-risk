@@ -1,4 +1,4 @@
-"""Définition des scénarios de stress.
+"""Stress scenario definitions.
 
-Squelette : implémentation à venir.
+Placeholder: implementation pending.
 """

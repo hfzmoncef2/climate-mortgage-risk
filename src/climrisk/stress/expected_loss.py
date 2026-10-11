@@ -1,4 +1,4 @@
-"""Calcul des pertes attendues.
+"""Expected loss calculations.
 
-Squelette : implémentation à venir.
+Placeholder: implementation pending.
 """

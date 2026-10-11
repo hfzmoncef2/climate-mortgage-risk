@@ -1,4 +1,4 @@
-"""Construction des variables d’exposition climatique.
+"""Climate exposure features.
 
-Squelette : implémentation à venir.
+Placeholder: implementation pending.
 """
