@@ -14,7 +14,8 @@ data:
 	uv run --frozen python -m climrisk.ingest.validate
 
 features:
-	@echo "TODO phases 2-3: target, panel, climate exposure"
+	uv run --frozen python -m climrisk.features.target
+	uv run --frozen python -m climrisk.features.panel
 
 causal:
 	@echo "TODO phases 5-6: event study, pricing"

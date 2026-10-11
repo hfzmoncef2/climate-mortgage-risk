@@ -1,0 +1,10 @@
+# Phase 2 target and panel definitions. See DECISIONS.md D004-D005.
+horizon_months: 24
+# Monthly window includes first payment through first payment + 23 months.
+default_dpd_months: 3
+default_status_codes: ["RA"]
+loss_zero_balance_codes: ["02", "03", "09"]
+prepay_zero_balance_codes: ["01"]
+censor_zero_balance_codes: ["15", "16", "96"]
+performance_cutoff: "2026-03-01"
+covid_window: {start: "2020-03-01", end: "2021-12-01"}

@@ -59,7 +59,7 @@ Data and the virtual environment are excluded from Git.
 - `configs/`: source schemas, future split dates and method parameters.
 - `data/{raw,interim,processed}/`: local data, entirely excluded from Git.
 - `src/climrisk/ingest/`: Freddie Mac ingestion and validation; FEMA, crosswalk and FRED placeholders.
-- `src/climrisk/features/`: target, panel and exposure placeholders.
+- `src/climrisk/features/`: loan default targets, ZIP3-month panels and an exposure placeholder.
 - `src/climrisk/causal/`: event study and pricing placeholders.
 - `src/climrisk/models/`: scorecard, GBM, calibration and evaluation placeholders.
 - `src/climrisk/stress/`: scenario and expected loss placeholders.
@@ -67,8 +67,8 @@ Data and the virtual environment are excluded from Git.
 - `tests/`: synthetic-data transformation tests and repository safeguards.
 - `reports/`: figures, aggregate quality report and LaTeX report skeleton.
 
-`make all` runs ingestion and validation, then prints TODO messages for the
-remaining pipeline stages. It does not yet run a complete research pipeline.
+`make all` runs ingestion, validation and feature construction, then prints TODO
+messages for the remaining pipeline stages. It does not yet run a complete research pipeline.
 Methodological choices and unresolved questions are recorded in `DECISIONS.md`.
 
 ## Development
@@ -84,3 +84,30 @@ need `deactivate` followed by `conda deactivate`.
 ## License
 
 Code is licensed under MIT. Source datasets retain their own access and licensing terms.
+
+## Phase 2: targets and panel
+
+```sh
+make features
+```
+
+`configs/target.yaml` defines the observation horizon, default and exit codes,
+data cutoff and COVID exclusion window. This produces:
+
+- `data/processed/loans.parquet`: all loans, first terminal events, outcome,
+  `default_24m`, exclusion flags and `in_pd_sample`.
+- `data/processed/zip3_month.parquet`: additive loan and delinquency counts,
+  payoff/loss exits, disaster delinquency, forbearance and current UPB.
+- `reports/target_summary.md`: aggregate outcomes, vintage default rates and exclusions.
+
+PD estimation uses labelled loans without HARP, date anomalies, COVID overlap or
+unknown ZIP3. The panel retains COVID months for later analysis-time restrictions.
+Every label requires a window ending on or before the cutoff, even for early defaults
+or payoffs, to avoid recent-vintage selection bias.
+Prepayment is a competing non-default outcome; transfers and incomplete windows are
+censored. Events after the cutoff cannot affect labels. Internal missing months are counted; loans observed at or after window end may
+be labelled performing despite gaps. A missing-month exclusion threshold is still
+pending review. Exits use `zero_balance_date` (reporting month as fallback), with
+the latest non-null exit code selected by reporting month. Earlier exits take
+precedence over later observed default statuses (D004-D005).
+Do not use outcome, event-date or other post-origination fields as model predictors.
