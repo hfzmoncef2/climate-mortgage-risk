@@ -8,10 +8,11 @@ version = "0.1.0"
 description = "Analyse du risque climatique des prêts hypothécaires"
 readme = "README.md"
 requires-python = ">=3.11"
+license = "MIT"
 dependencies = []
 
-[project.optional-dependencies]
-dev = ["pytest>=8", "ruff>=0.9"]
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.9", "pre-commit>=4"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
