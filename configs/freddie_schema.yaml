@@ -1,0 +1,90 @@
+# Schéma des fichiers Freddie Mac SFLLD
+# Source : General User Guide + File Layout, Effective July 2026
+# Fichiers séparés par "|", sans ligne d'en-tête.
+# dtype "yyyymm" = date mensuelle codée YYYYMM, convertie en date à l'ingestion.
+# missing_codes = valeurs qui signifient "inconnu" → remplacées par NULL.
+
+meta:
+  layout_version: "July 2026"
+  delimiter: "|"
+  header: false
+  performance_cutoff: "2026-03"
+
+origination:
+  - {position: 1,  name: fico,               source_name: "Classic FICO",                     dtype: Int16,   missing_codes: [9999]}
+  - {position: 2,  name: first_payment_date, source_name: "First Payment Date",               dtype: yyyymm,  missing_codes: []}
+  - {position: 3,  name: first_time_buyer,   source_name: "First Time Homebuyer Indicator",   dtype: string,  missing_codes: ["9"]}
+  - {position: 4,  name: maturity_date,      source_name: "Maturity Date",                    dtype: yyyymm,  missing_codes: []}
+  - {position: 5,  name: msa,                source_name: "MSA or Metropolitan Division",     dtype: Int32,   missing_codes: []}
+  - {position: 6,  name: mi_pct,             source_name: "Mortgage Insurance Percentage",    dtype: Int16,   missing_codes: [999]}
+  - {position: 7,  name: num_units,          source_name: "Number of Units",                  dtype: Int8,    missing_codes: [99]}
+  - {position: 8,  name: occupancy,          source_name: "Occupancy Status",                 dtype: string,  missing_codes: ["9"]}
+  - {position: 9,  name: cltv,               source_name: "Original Combined Loan-to-Value",  dtype: Int16,   missing_codes: [999]}
+  - {position: 10, name: dti,                source_name: "Original Debt-to-Income Ratio",    dtype: Int16,   missing_codes: [999]}
+  - {position: 11, name: orig_upb,           source_name: "Original UPB",                     dtype: Int32,   missing_codes: []}
+  - {position: 12, name: ltv,                source_name: "Original Loan-to-Value",           dtype: Int16,   missing_codes: [999]}
+  - {position: 13, name: orig_rate,          source_name: "Original Interest Rate",           dtype: Float64, missing_codes: []}
+  - {position: 14, name: channel,            source_name: "Channel",                          dtype: string,  missing_codes: ["9"]}
+  - {position: 15, name: prepay_penalty,     source_name: "Prepayment Penalty Indicator",     dtype: string,  missing_codes: []}
+  - {position: 16, name: amort_type,         source_name: "Amortization Type",                dtype: string,  missing_codes: []}
+  - {position: 17, name: state,              source_name: "Property State",                   dtype: string,  missing_codes: []}
+  - {position: 18, name: property_type,      source_name: "Property Type",                    dtype: string,  missing_codes: ["99"]}
+  - {position: 19, name: postal_code,        source_name: "Postal Code",                      dtype: string,  missing_codes: ["000", "00000"],
+     notes: "Seuls les 3 premiers chiffres sont réels (ex. 30400 → ZIP3 304) ; les 2 derniers sont masqués à 00. 000 = inconnu."}
+  - {position: 20, name: loan_id,            source_name: "Loan Identifier",                  dtype: string,  missing_codes: []}
+  - {position: 21, name: loan_purpose,       source_name: "Loan Purpose",                     dtype: string,  missing_codes: ["9"]}
+  - {position: 22, name: orig_term,          source_name: "Original Loan Term",               dtype: Int16,   missing_codes: []}
+  - {position: 23, name: num_borrowers,      source_name: "Number of Borrowers",              dtype: Int8,    missing_codes: [99]}
+  - {position: 24, name: seller_name,        source_name: "Seller Name",                      dtype: string,  missing_codes: []}
+  - {position: 25, name: super_conforming,   source_name: "Super Conforming Flag",            dtype: string,  missing_codes: []}
+  - {position: 26, name: pre_harp_loan_id,   source_name: "Pre-HARP Loan Sequence Number",    dtype: string,  missing_codes: []}
+  - {position: 27, name: special_program,    source_name: "Special Eligibility Program",      dtype: string,  missing_codes: []}
+  - {position: 28, name: harp,               source_name: "HARP Indicator",                   dtype: string,  missing_codes: []}
+  - {position: 29, name: valuation_method,   source_name: "Property Valuation Method",        dtype: Int8,    missing_codes: [7],
+     notes: "Rempli seulement pour les prêts originés à partir du 2017-01-01."}
+  - {position: 30, name: interest_only,      source_name: "Interest Only Indicator",          dtype: string,  missing_codes: []}
+  - {position: 31, name: vantage_score,      source_name: "VantageScore 4.0",                 dtype: Int16,   missing_codes: [9999]}
+
+performance:
+  - {position: 1,  name: loan_id,                  source_name: "Loan Identifier",                       dtype: string,  missing_codes: []}
+  - {position: 2,  name: period,                   source_name: "Period",                                dtype: yyyymm,  missing_codes: []}
+  - {position: 3,  name: current_upb,              source_name: "Current Actual UPB",                    dtype: Float64, missing_codes: []}
+  - {position: 4,  name: delinquency_status,       source_name: "Current Loan Delinquency Status",       dtype: string,  missing_codes: ["XX"],
+     notes: "00 = à jour, 01 = 30-59 j, 02 = 60-89 j, 03 = 90-119 j, ... plafonné à 99. RA = saisie (REO) → compte comme défaut. Garder en string à cause de RA/XX."}
+  - {position: 5,  name: loan_age,                 source_name: "Loan Age",                              dtype: Int16,   missing_codes: []}
+  - {position: 6,  name: months_to_maturity,       source_name: "Remaining Months to Legal Maturity",    dtype: Int16,   missing_codes: []}
+  - {position: 7,  name: defect_settlement_date,   source_name: "Defect Settlement Date",                dtype: yyyymm,  missing_codes: []}
+  - {position: 8,  name: modification_flag,        source_name: "Modification Flag",                     dtype: string,  missing_codes: []}
+  - {position: 9,  name: zero_balance_code,        source_name: "Zero Balance Code",                     dtype: string,  missing_codes: [],
+     notes: "01 = remboursé (prépaiement), 02 = vente à un tiers, 03 = short sale / charge-off, 09 = REO, 15 = vente du prêt, 16 = re-titrisation, 96 = défaut de souscription. 02/03/09 = sortie en perte → défaut."}
+  - {position: 10, name: zero_balance_date,        source_name: "Zero Balance Effective Date",           dtype: yyyymm,  missing_codes: []}
+  - {position: 11, name: current_rate,             source_name: "Current Interest Rate",                 dtype: Float64, missing_codes: []}
+  - {position: 12, name: non_interest_upb,         source_name: "Current Non-Interest Bearing UPB",      dtype: Float64, missing_codes: []}
+  - {position: 13, name: ddlpi,                    source_name: "Due Date of Last Paid Installment",     dtype: yyyymm,  missing_codes: []}
+  - {position: 14, name: mi_recoveries,            source_name: "MI Recoveries",                         dtype: Float64, missing_codes: []}
+  - {position: 15, name: net_sales_proceeds,       source_name: "Net Sales Proceeds",                    dtype: string,  missing_codes: [],
+     notes: "Gardé en string : peut contenir des lettres (anciennes versions : C = couvert, U = inconnu). À convertir en montant en phase 8, après vérification des valeurs réelles."}
+  - {position: 16, name: non_mi_recoveries,        source_name: "Non MI Recoveries",                     dtype: Float64, missing_codes: []}
+  - {position: 17, name: total_expenses,           source_name: "Total Expenses",                        dtype: Float64, missing_codes: []}
+  - {position: 18, name: legal_costs,              source_name: "Legal Costs",                           dtype: Float64, missing_codes: []}
+  - {position: 19, name: maintenance_costs,        source_name: "Maintenance and Preservation Costs",    dtype: Float64, missing_codes: []}
+  - {position: 20, name: taxes_insurance,          source_name: "Taxes and Insurance",                   dtype: Float64, missing_codes: []}
+  - {position: 21, name: misc_expenses,            source_name: "Miscellaneous Expenses",                dtype: Float64, missing_codes: []}
+  - {position: 22, name: actual_loss,              source_name: "Actual Loss",                           dtype: Float64, missing_codes: [],
+     notes: "NULL si le prêt est sorti dans les 3 mois avant le cutoff. Gains = valeurs négatives."}
+  - {position: 23, name: cum_modification_cost,    source_name: "Cumulative Modification Costs",         dtype: Float64, missing_codes: []}
+  - {position: 24, name: step_modification,        source_name: "Interest Rate Step Indicator",          dtype: string,  missing_codes: []}
+  - {position: 25, name: payment_deferral,         source_name: "Payment Deferral Flag",                 dtype: string,  missing_codes: []}
+  - {position: 26, name: eltv,                     source_name: "Estimated Loan-to-Value",               dtype: Int16,   missing_codes: [999],
+     notes: "Rempli seulement à partir d'avril 2017."}
+  - {position: 27, name: zero_balance_removal_upb, source_name: "Zero Balance Removal UPB",              dtype: Float64, missing_codes: []}
+  - {position: 28, name: delinquent_accrued_int,   source_name: "Delinquent Accrued Interest",           dtype: Float64, missing_codes: []}
+  - {position: 29, name: disaster_delinquency,     source_name: "Delinquency Due to Disaster",           dtype: string,  missing_codes: [],
+     notes: "Y = retard dû à une catastrophe. Rempli seulement à partir de janvier 2014. Clé pour valider la phase 5."}
+  - {position: 30, name: assistance_plan,          source_name: "Borrower Assistance Plan",              dtype: string,  missing_codes: [],
+     notes: "F = forbearance, R = plan de remboursement, T = période d'essai. Depuis janvier 2014."}
+  - {position: 31, name: current_modification_cost, source_name: "Current Period Modification Costs",    dtype: Float64, missing_codes: []}
+  - {position: 32, name: interest_bearing_upb,     source_name: "Current Interest Bearing UPB",          dtype: Float64, missing_codes: []}
+  - {position: 33, name: mi_cancellation,          source_name: "MI Cancellation Indicator",             dtype: string,  missing_codes: ["7"]}
+  - {position: 34, name: servicer_name,            source_name: "Servicer Name",                         dtype: string,  missing_codes: []}
+  - {position: 35, name: bankruptcy_cramdown_cost, source_name: "Bankruptcy Cramdown Costs",             dtype: Float64, missing_codes: []}
