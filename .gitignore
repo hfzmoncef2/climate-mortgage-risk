@@ -1,0 +1,19 @@
+# Données : ne jamais versionner, même les sous-dossiers.
+/data/
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+.ipynb_checkpoints/
+.DS_Store
+reports/*.aux
+reports/*.log
+reports/*.out
+reports/*.pdf
