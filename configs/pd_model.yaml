@@ -1,0 +1,6 @@
+# PD model (Phase 7): out-of-time split by vintage. See DECISIONS.md.
+split:
+  train: [2004, 2014]        # includes the 2007-2008 downturn (through-the-cycle)
+  validation: [2015, 2018]   # model selection and tuning only
+  test: [2021, 2024]         # evaluated once, after refit on train+validation
+# 2019-2020 have no eligible loans (COVID window, D004/PD sample exclusions)
