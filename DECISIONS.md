@@ -225,3 +225,28 @@ Record the date, context, alternatives, rationale and consequences for each deci
   does not reconstruct historical declaration revisions or guarantee availability.
 - Declaration-based exposure reflects administrative decisions as well as physical
   risk; a physical measure (coastal counties / NOAA hurricane tracks) is planned for Phase 6.
+
+## D012 — Event study design
+
+- Stacked event study: one stack per event month, ZIP3 x month, loan-count weights,
+  standard errors clustered by ZIP3.
+- Treatment: main-definition hit share >= 0.5; robustness thresholds 0.75 and 0.9.
+  Clean treated units have no other main-definition hit in [-12, +24], except
+  the event and two following grace months. Grace months need not be the same disaster.
+- Controls: same Census division, no main-definition hit anywhere in the window.
+  Fixed effects: ZIP3 x stack and division x calendar month x stack; reference k=-1.
+- Windows overlapping March 2020 through December 2021 are excluded; territories
+  without a Census division are excluded. Monthly panels can remain unbalanced.
+- Causal interpretation requires parallel trends and no spillovers. Loan weights and
+  repeated controls across stacks define the pooled estimand; clean controls alone
+  do not guarantee unbiased aggregation under heterogeneous treatment effects.
+
+## D013 — Pre-trend tests
+
+- Report two single-restriction tests: mean of leads k=-12 through -2 (level gap),
+  and their linear slope (diverging trend), using cluster covariance and t with G-1 df.
+- The supplied simulation reportedly found 20% rejection for an 11-lead joint Wald
+  test at 5% nominal size, versus about 5% for these combinations. That simulation
+  has not been independently reproduced in this repository; correct size is not guaranteed.
+- Inspect all lead estimates and confidence intervals. Non-rejection of either
+  combination is not proof of parallel trends and can miss nonlinear pre-trends.

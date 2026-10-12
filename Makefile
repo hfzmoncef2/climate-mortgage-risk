@@ -21,7 +21,7 @@ features:
 	uv run --frozen python -m climrisk.features.climate
 
 causal:
-	@echo "TODO phases 5-6: event study, pricing"
+	uv run --frozen python -m climrisk.causal.event_study
 
 models:
 	@echo "TODO phases 7-8: PD model, stress test"

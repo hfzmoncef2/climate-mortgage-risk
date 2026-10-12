@@ -1,0 +1,21 @@
+# Stacked event study. See D012-D013 in DECISIONS.md.
+window:
+  before: 12
+  after: 24
+treatment:
+  definition: main
+  hit_share_threshold: 0.5
+  grace_months: 2
+clean_definition: main
+data_start: "2004-06-01"
+data_end: "2026-03-01"
+exclude_window: {start: "2020-03-01", end: "2021-12-01"}
+outcomes:
+  dlq60: n_dlq60
+  dlq90: n_dlq90
+  disaster_flag: n_disaster_dlq
+  forbearance: n_forbearance
+  prepaid: n_prepaid
+main_outcome: dlq60
+average_effect_months: [1, 6]
+robustness_thresholds: [0.5, 0.75, 0.9]
