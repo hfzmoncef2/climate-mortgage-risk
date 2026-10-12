@@ -1,0 +1,3 @@
+# Pricing analysis (Phase 6): is climate risk priced in mortgage rates?
+sources:
+  pmms_url: "https://fred.stlouisfed.org/graph/fredgraph.csv?id=MORTGAGE30US"
