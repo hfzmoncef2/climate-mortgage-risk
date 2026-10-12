@@ -250,3 +250,41 @@ Record the date, context, alternatives, rationale and consequences for each deci
   has not been independently reproduced in this repository; correct size is not guaranteed.
 - Inspect all lead estimates and confidence intervals. Non-rejection of either
   combination is not proof of parallel trends and can miss nonlinear pre-trends.
+
+## D014 — Event-study heterogeneity and default follow-up
+
+- Re-estimate D012 by dominant disaster type and before/from January 2010. Type
+  assignment counts each county's housing once per group-month; ties are alphabetical.
+- Skip subsamples with fewer than 10 treated ZIP3-events. This is a screening rule,
+  not a guarantee that clustered inference is reliable; events can share ZIP3 clusters.
+- Cure cohort: existing D004 default labels from January 2014, with default date +24
+  months no later than the performance cutoff. Defaults during COVID are excluded,
+  but follow-up can overlap COVID. This is not a lifetime first-default cohort.
+- Flags: default month and two preceding months; disaster takes precedence over
+  forbearance. Loss/REO takes precedence over ever returning to current or prepaying,
+  then transfer, then observed terminal delinquency. Missing terminal follow-up is unknown.
+- Exit timing uses zero_balance_date, falling back to reporting month; late-reported
+  exits known by the cutoff can qualify. REO is not necessarily realized accounting loss.
+- Ever curing does not imply sustained performance. Follow-up gaps may hide events;
+  unobserved outcomes after transfer remain unknown. These descriptive associations
+  do not measure causal effects of assistance or determine a new PD target on their own.
+
+## D015 — Interpretation by disaster type and PD target sensitivity
+
+- Hurricane/tropical-storm estimates show a clear short-run increase. The flood
+  lead-mean test rejects and the plotted leads show a pre-event pattern: the negative
+  flood estimate is not causally identified under this design and must not be read
+  as a protective effect. Fire estimates also require scrutiny of the lead profile;
+  non-rejection of mean/slope tests alone does not establish parallel trends.
+- Retain D004 (90+ delinquency, RA or loss exit) as the primary target. Disaster-related
+  delinquency is a real payment interruption even when it later cures. High cure rates
+  do not by themselves justify relabelling observed defaults as non-defaults.
+- Plan a separately specified credit-default sensitivity target distinguishing
+  persistent delinquency and loss/REO from temporary cured episodes. The precise
+  persistence and follow-up requirements must be fixed before estimation; this variant
+  is not implemented here and does not alter D004 or the current PD sample.
+- Report ever-cured and current-at-end separately. Current-at-end requires an observed
+  current status at default month +24, without loss/REO, payoff or transfer during
+  follow-up; denominator = all eligible defaults in the group. Missing endpoint
+  observations and prepaid loans do not count as current. This does not prove that
+  the loan remained current continuously between cure and follow-up end.

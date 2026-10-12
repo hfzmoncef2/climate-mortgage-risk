@@ -22,6 +22,7 @@ features:
 
 causal:
 	uv run --frozen python -m climrisk.causal.event_study
+	uv run --frozen python -m climrisk.causal.robustness
 
 models:
 	@echo "TODO phases 7-8: PD model, stress test"

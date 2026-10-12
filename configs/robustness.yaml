@@ -1,0 +1,11 @@
+# Event-study robustness and cure analysis.
+incident_groups:
+  Hurricane / tropical storm: [Hurricane, Tropical Storm, Coastal Storm, Typhoon]
+  Flood: [Flood, Dam/Levee Break]
+  Fire: [Fire]
+min_events: 10
+period_split: "2010-01"
+cure:
+  horizon_months: 24
+  flag_lookback_months: 2
+  first_default: "2014-01-01"
