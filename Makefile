@@ -13,16 +13,19 @@ data:
 	uv run --frozen python -m climrisk.ingest.freddie --all
 	uv run --frozen python -m climrisk.ingest.validate
 	uv run --frozen python -m climrisk.ingest.fema
+	uv run --frozen python -m climrisk.ingest.fred
 	uv run --frozen python -m climrisk.ingest.census
 
 features:
 	uv run --frozen python -m climrisk.features.target
 	uv run --frozen python -m climrisk.features.panel
 	uv run --frozen python -m climrisk.features.climate
+	uv run --frozen python -m climrisk.features.coast
 
 causal:
 	uv run --frozen python -m climrisk.causal.event_study
 	uv run --frozen python -m climrisk.causal.robustness
+	uv run --frozen python -m climrisk.causal.pricing
 
 models:
 	@echo "TODO phases 7-8: PD model, stress test"
