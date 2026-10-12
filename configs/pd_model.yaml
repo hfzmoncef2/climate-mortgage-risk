@@ -34,3 +34,6 @@ gbm:                         # LightGBM challenger (same features as the scoreca
                              # default rate than train, so log loss would also punish the level
                              # (calibration is handled separately, step 5)
   seed: 42
+
+calibration:
+  bins: 10                   # equal-count bins of predicted PD for the reliability table
