@@ -1,9 +1,9 @@
-.PHONY: help setup data features causal models report lint format test check all
+.PHONY: help setup data features causal models risk report lint format test check all
 
 help:
 	@echo "setup: install dependencies and pre-commit hooks"
 	@echo "lint / format / test / check: project checks"
-	@echo "data / features / causal / models / report: reproduce pipeline stages"
+	@echo "data / features / causal / models / risk / report: reproduce pipeline stages"
 
 setup:
 	uv sync --frozen
@@ -38,6 +38,10 @@ models:
 	uv run --frozen python -m climrisk.models.final
 	uv run --frozen python -m climrisk.models.sensitivity
 
+risk:
+	uv run --frozen python -m climrisk.risk.lgd
+	uv run --frozen python -m climrisk.risk.stress
+
 report:
 	uv run --frozen python -m climrisk.viz.eda
 
@@ -53,4 +57,4 @@ test:
 
 check: lint test
 
-all: data features causal models report
+all: data features causal models risk report

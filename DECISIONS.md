@@ -484,3 +484,70 @@ Record the date, context, alternatives, rationale and consequences for each deci
   Phase 8 scenarios must not treat TTC PDs as a current-conditions forecast.
 - **Caveat:** intervals resample loans, not ZIP3; they omit within-ZIP3 dependence,
   fitting and model-selection uncertainty and may understate uncertainty.
+
+## D024 — Loss given default measured in the data (Phase 8)
+
+**Decision.**
+- **Scope:** D004 defaults of the PD sample with a complete 60-month follow-up (D + 60
+  ≤ cutoff, whatever the outcome).
+- **EAD:** the balance at default. When the balance is masked in the first months of the
+  loan, the original balance is used.
+- **Loss:** Freddie Mac's `actual_loss` for loss exits 02, 03 and 09.
+  - It equals balance + accrued interest + expenses − sale proceeds − recoveries, which was
+    checked on example rows.
+  - Loss exits with no published amount get the severity of the reported loss exits of the
+    same period.
+  - Payoffs and loans current at the end of the follow-up have a loss of 0.
+- **Unresolved defaults:** transfers (15, 16, 96) and loans still delinquent. Scenario
+  assumptions: low = no loss, high = a loss exit at the period's severity. These are not
+  statistical confidence intervals or guaranteed bounds on actual losses.
+- **LGD:** sum(loss) / sum(EAD).
+
+**Results (central, with [low, high]).**
+- **By default period:**
+  - 2005–2008: 31.5% [23.0, 35.9];
+  - 2009–2012: 26.3% [20.2, 31.5];
+  - 2017–2021: 1.0% [0.8, 3.6].
+- **Defaults from 2014 onwards:** disaster-flagged 0.04% [0.03, 3.08] versus neither flag 2.77%
+  [2.11, 5.44]. Disaster-flagged defaults lose less under each matching scenario assumption.
+  - Only about 180 disaster-flagged defaults are resolved, with one loss exit; the central
+    estimate is therefore fragile.
+- **Mortgage insurance:** loans with LTV ≥ 90 have a lower loss severity (32% versus 53% at
+  LTV 80–90), consistent with mortgage-insurance recoveries.
+
+**Why.** Excluding unresolved defaults can bias LGD downwards: note sales may be
+loss-making but their losses are not published. Scenario ranges make that assumption visible.
+
+## D025 — Stress-test design (Phase 8)
+
+**Decision.**
+- **Book:** the 2021–2024 PD-sample loans (114,822 loans, $35.1 bn), with EAD = original
+  balance, over a 24-month horizon. EL = PD × LGD × EAD.
+- **Baseline:** TTC PD from the D021 primary model, with the benign LGD of 2017–2021 defaults.
+- **Recession:** PD × 2.42, the observed / TTC ratio of the 2007–2008 vintages, in-sample,
+  with the downturn LGD of 2005–2012 defaults.
+- **Hurricane:** extra PD = 1.146 pp (Phase 5 hurricane effect) × coastal share, with every
+  coastal ZIP3 hit at once and every extra 60+ day delinquency counted as a default. The LGD is
+  that of disaster-flagged defaults, and the high disaster LGD when the hurricane comes during
+  a recession.
+
+**Results (central EL, % of balance).**
+
+| Scenario | Central EL | Range |
+|---|---|---|
+| Baseline | 0.009% | |
+| Hurricane increment | +0.0001% | high: +0.010% |
+| Recession | 0.59% | [0.45, 0.70] |
+| Hurricane in a recession | 0.60% | |
+
+**Why.**
+- The scenarios are illustrative, transparent and built only from the project's own
+  estimates. The hurricane incidence assumptions are deliberately severe. Hurricane credit
+  loss remains small relative to recession loss under the specified LGD scenarios; this is
+  conditional on the measured disaster LGD and its limited sample.
+
+**Limits.**
+- The TTC baseline is not a current-conditions forecast (D023); it under-predicts observed
+  recent default rates, so the baseline absolute loss level may be understated.
+- Only the lender's or guarantor's credit loss is covered. Physical damage, insurance costs
+  and long-run coastal house-price risk are out of scope.
