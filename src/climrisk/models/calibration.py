@@ -77,11 +77,16 @@ def recalibration(y: np.ndarray, p: np.ndarray) -> tuple[float, float]:
     return level_shift(p, y.mean()), float(model.coef_[0, 0])
 
 
-def fig_calibration(tables: dict[str, pd.DataFrame], path: Path) -> None:
+def fig_calibration(
+    tables: dict[str, pd.DataFrame],
+    path: Path,
+    title: str = "PD calibration on the validation vintages (2015-2018)",
+) -> None:
     from matplotlib.ticker import FuncFormatter
 
     fig, ax = es.plt_subplots(figsize=(6.2, 5.0))
-    colors = {"WoE scorecard": COLORS["focus"], "LightGBM": COLORS["focus_2"]}
+    slots = [COLORS["focus"], COLORS["focus_2"]]
+    colors = {name: slots[i % len(slots)] for i, name in enumerate(tables)}
     values = pd.concat([100 * t[c] for t in tables.values() for c in ("mean_pd", "default_rate")])
     values = values[values > 0]
     lo, hi = values.min() * 0.7, values.max() * 1.4
@@ -120,7 +125,7 @@ def fig_calibration(tables: dict[str, pd.DataFrame], path: Path) -> None:
     ax.grid(axis="both", which="major", visible=True)
     ax.set_xlabel("Mean predicted PD per decile (%, log scale)")
     ax.set_ylabel("Observed 24-month default rate (%, log scale)")
-    ax.set_title("PD calibration on the validation vintages (2015-2018)", loc="left")
+    ax.set_title(title, loc="left")
     ax.legend(frameon=False, loc="upper left", fontsize=8.5)
     fig.tight_layout()
     es.save(fig, path)
