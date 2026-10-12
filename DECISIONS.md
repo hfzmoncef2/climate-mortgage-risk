@@ -353,3 +353,64 @@ Record the date, context, alternatives, rationale and consequences for each deci
   causal interpretation remains conditional on D012-D015 assumptions. Whether
   coastal spreads compensate expected losses will be assessed in Phase 8 using
   measured loss given default and aligned horizons, rather than assumed LGD alone.
+
+## D019 — PD model design (Phase 7)
+
+**Decision.**
+- **Target:** 24-month default (D004) on the PD sample.
+- **Out-of-time split by vintage:**
+  - train 2004–2014, which includes the 2007–2008 downturn;
+  - validation 2015–2018, used for selection and tuning only;
+  - test 2021–2024, evaluated once.
+  2019–2020 have no eligible loans.
+- **Features:** origination data only. Excluded from predictors: performance-file fields, window
+  flags, `start_gap`, seller name, valuation method, vintage.
+- **Main model: WoE scorecard.**
+  - Quantile bins, with a 'missing' bin and a separate bin for a point mass at the minimum.
+  - Selection on train only: IV ≥ 0.02; |WoE correlation| ≤ 0.8, keeping the higher IV;
+    all coefficients negative.
+- **Benchmark: LightGBM** on the same features, with early stopping on validation AUC.
+
+**Why.**
+- **Out-of-time, not random, split:** this is how a lender uses the model, and a random split
+  would leak future information.
+- **Scorecard over LightGBM:** LightGBM gained only +0.002 validation AUC (0.816 vs 0.814),
+  with a larger train-validation gap. The scorecard is kept for interpretability and
+  stability.
+
+## D020 — Through-the-cycle PD anchoring (Phase 7)
+
+**Decision.**
+- Refit the scorecard on 2004–2018.
+- Shift every logit(PD) by a constant (base-scorecard diagnostic a ≈ −0.14) so that the mean PD equals the simple
+  average of the yearly default rates (1.105%), not the loan-weighted rate (1.264%).
+
+**Why.**
+- **No macroeconomic variables:** the model ranks loans but cannot forecast the cycle. Raw
+  PDs over-predicted validation by about 2× (a = −0.77), uniformly across deciles
+  (slope b = 0.91).
+- **Sample-based TTC anchoring:** the gap by vintage can reflect the credit cycle, omitted
+  variables and model error; it does not isolate a macroeconomic effect. Phase 8 explores
+  stress scenarios. The shift is recomputed on the development sample for each final scorecard.
+- This is a sample-based TTC proxy, not a regulatory calibration.
+
+## D021 — Climate features of the final PD model (pre-registered before the test)
+
+**Decision.**
+- **Primary model:** scorecard with `near_coast_share` and `log_dist_coast` added, under the
+  usual selection rules (no forced retention). Validation ablation forced climate features
+  past IV/correlation filters; the final refit applies the standard filters to all features.
+- **Excluded:** `exposure_main`, `exposure_broad` and `recent_events_12m`.
+- **On test:** compared with the base scorecard (paired bootstrap), with LightGBM base as the
+  benchmark.
+
+**Why (validation results).**
+- **Static coast features:** +0.0022 AUC for the scorecard (95% paired bootstrap
+  [+0.0015, +0.0028]). This is the best of the climate sets, and the features are stable over
+  time (PSI ≤ 0.021).
+- **Exposure features drift:** PSI 0.15–0.21 from train to validation, partly acting as a
+  possible proxy for the vintage (hypothesis, not established causally). They reduced LightGBM's AUC (−0.0068); static features alone halved
+  the loss (−0.0028). `recent_events_12m` has weak univariate signal (IV 0.0025).
+- **Caveat:** intervals resample loans, not ZIP3; they exclude within-ZIP3 dependence,
+  model fitting and validation-based selection uncertainty and may understate uncertainty.
+- This choice is fixed before any test-vintage evaluation (commit timestamp).

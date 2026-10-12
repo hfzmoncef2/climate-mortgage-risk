@@ -52,3 +52,10 @@ ablation:                    # does adding the climate features improve the PD m
                   log_dist_coast]
     climate_static: [near_coast_share, log_dist_coast]   # geography only: no time trend
   psi_bins: 10               # population stability index, train -> validation
+
+final:                       # frozen on the validation results, BEFORE the test vintages are used
+  fit_splits: [train, validation]       # refit on 2004-2018
+  test_split: test                      # 2021-2024, evaluated once
+  climate_features: [near_coast_share, log_dist_coast]   # primary = scorecard + these (D021)
+  bootstrap: 500             # bootstrap of test loans for the confidence intervals
+  seed: 11
