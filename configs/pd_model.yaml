@@ -4,3 +4,10 @@ split:
   validation: [2015, 2018]   # model selection and tuning only
   test: [2021, 2024]         # evaluated once, after refit on train+validation
 # 2019-2020 have no eligible loans (COVID window, D004/PD sample exclusions)
+
+features:
+  numeric: [fico, ltv, cltv, dti, log_upb, orig_term, mi_pct, num_borrowers, num_units, spread_bp]
+  categorical: [loan_purpose, occupancy, channel, property_type, first_time_buyer,
+                super_conforming, state]
+  climate: [exposure_main, exposure_broad, recent_events_12m, near_coast_share, log_dist_coast]
+  recent_months: 12          # disasters in the 12 months before origination (same availability lag)
