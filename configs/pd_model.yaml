@@ -19,3 +19,18 @@ scorecard:
   C: 1.0                    # Inverse L2 penalty
   min_iv: 0.02               # Drop weak features using training data only
   max_corr: 0.8              # Retain higher-IV correlated WoE features
+
+gbm:                         # LightGBM challenger (same features as the scorecard, before selection)
+  learning_rate: 0.05
+  num_leaves: 31
+  min_child_samples: 200     # defaults are rare: large leaves avoid fitting single loans
+  subsample: 0.8
+  subsample_freq: 1
+  colsample_bytree: 0.8
+  reg_lambda: 1.0
+  n_estimators: 3000         # upper bound; the actual number is set by early stopping
+  early_stopping_rounds: 100
+  metric: auc                # early-stopping metric: ranking only. Validation has a different
+                             # default rate than train, so log loss would also punish the level
+                             # (calibration is handled separately, step 5)
+  seed: 42
