@@ -11,3 +11,11 @@ features:
                 super_conforming, state]
   climate: [exposure_main, exposure_broad, recent_events_12m, near_coast_share, log_dist_coast]
   recent_months: 12          # disasters in the 12 months before origination (same availability lag)
+
+scorecard:
+  numeric_bins: 10           # Training quantile bins, plus missing
+  min_bin_share: 0.005       # Pool rare categories into other
+  woe_smoothing: 0.5         # Avoid log(0)
+  C: 1.0                    # Inverse L2 penalty
+  min_iv: 0.02               # Drop weak features using training data only
+  max_corr: 0.8              # Retain higher-IV correlated WoE features
