@@ -289,17 +289,67 @@ Record the date, context, alternatives, rationale and consequences for each deci
   observations and prepaid loans do not count as current. This does not prove that
   the loan remained current continuously between cure and follow-up end.
 
-## D016 — Physical Atlantic/Gulf coastal proximity
+## D016 — Physical hurricane-coast exposure (Phase 6)
 
-- Distance from county polygons to Census TIGER 2020 Atlantic/Gulf coastline,
-  projected to EPSG:5070 and expressed in km. Pacific/Great Lakes coastlines are
-  excluded from this proxy for mainland hurricane-coast proximity.
-- County distance is the minimum polygon-to-coast distance, not a property's or
-  housing centroid's distance; a coastal county can assign zero distance to inland homes.
-- Aggregate with 2010 ZIP3 housing weights; report matched coverage and renormalise
-  available weights. Post-2010 county codes map to predecessors; Bedford city (51515)
-  takes Bedford County's (51019) distance. These boundary mappings are approximate.
-- Static geography avoids using future disaster occurrences, but 2020 boundaries and
-  shoreline geometry plus 2010 housing weights remain retrospective. EPSG:5070 is
-  intended for CONUS; distances for Alaska, Hawaii and territories need caution.
-- Coastal proximity is not hurricane probability, intensity or property-level flood risk.
+- Decision: complement historical disaster exposure (`exposure_main`, D010/D011)
+  with static physical coastal proximity. Measure minimum distance from Census
+  `cb_2020_us_county_500k` county polygons to TIGER 2020 coastline segments named
+  Atlantic or Gulf, in EPSG:5070 (metres), then convert to km.
+- Aggregate with 2010 ZIP3 housing weights. Outputs: `dist_coast_km`,
+  `shoreline_share` (county distance <= 1 km), and `near_coast_share` (<= 50 km,
+  the main pricing variable). These shares describe housing in counties meeting
+  the distance threshold, not individual homes measured within that distance.
+- Rationale: capture physical mainland Atlantic/Gulf coastal proximity even where
+  no recent disaster was declared. Other coasts are outside this proxy's scope;
+  their exclusion is not a claim that they face no hurricane or other climate risk.
+- Post-2010 codes map to their 2010 predecessors using climate.yaml. Bedford city,
+  VA (51515), dissolved in 2013, takes Bedford County's (51019) distance. Mappings
+  across changed boundaries are approximate.
+- All 890 ZIP3 with housing weights have full matched coverage in the current run.
+  This does not cover ZIP3 008 and 969, which have no weights.
+- Limits: county minimum distance is not property-level distance or hurricane
+  probability. Static geography avoids future disaster occurrences, but 2020
+  boundaries/shoreline and 2010 housing weights remain retrospective.
+- EPSG:5070 is intended for CONUS and distorts distances for Alaska, Hawaii and
+  Puerto Rico. State x month fixed effects do not remove within-state measurement
+  error; a CONUS-only sensitivity check remains appropriate.
+
+## D017 — Spread definition and origination month (Phase 6)
+
+- Decision: `spread_bp = 100 * (orig_rate - PMMS)`, with both rates in percent.
+- PMMS: monthly average of the weekly Freddie Mac 30-year survey rate from FRED
+  `MORTGAGE30US`; weeks marked `.` are skipped.
+- Approximate origination month as first payment date minus two months; the exact
+  origination month is not published. Sample: 360-month non-HARP loans, with known
+  ZIP3 and origination rate. HARP relief refinances are a distinct population.
+- Join audit: 753,856 eligible loans, 753,660 matched. The 196 unmatched loans are
+  in ZIP3 008 (53) and 969 (143), lacking climate/coast weights; none lack PMMS.
+- Rationale: remove the market-wide rate level. Fixed effects absorb common state
+  x proxy-month levels, but cannot guarantee correction of loan-specific date
+  errors or misassigned climate exposure. Check alternative origination lags later.
+- Diagnostic: median spreads are 3-23 bp across broad vintage groups; the 2020-24
+  group's fifth percentile is -86 bp. This is consistent with timing sensitivity
+  during rapid rate changes, not proof of a particular loan's date error.
+
+## D018 — Pricing design: same controls for spread and default (Phase 6)
+
+- Estimate `y ~ exposure_main + near_coast_share + controls | state^orig_month`.
+  CRV1 standard errors are clustered by ZIP3; coefficient confidence intervals
+  use t(G-1), with G currently counted in the input subsample.
+- Spread regressions: all eligible originations, before 2012, from 2012, and the
+  PD sample. Default regressions: `100 * default_24m` on the PD sample, pooled
+  and separately before/from 2012. Periods use identifier-derived vintage.
+- Controls: FICO/LTV/DTI bins of 20/5/5 with missing categories; log original UPB;
+  purpose, occupancy, property type, units, channel, borrowers, first-time buyer,
+  mortgage-insurance indicator (missing MI treated as zero), super-conforming flag.
+- The pooled PD spread/default regressions use the same input loans and controls;
+  both retain 564,867 observations after dropping 91 singleton fixed effects.
+  Verify retained membership and cluster counts when extending inference tests.
+- Same controls and sample support comparison, but coefficients have different
+  units (bp versus pp) and do not directly establish adequate risk compensation.
+- Split default regressions check whether the coastal association persists beyond
+  the housing-bust vintages. They do not eliminate all within-state confounding.
+- Interpretation: conditional associations, not causal pricing effects. Event-study
+  causal interpretation remains conditional on D012-D015 assumptions. Whether
+  coastal spreads compensate expected losses will be assessed in Phase 8 using
+  measured loss given default and aligned horizons, rather than assumed LGD alone.
