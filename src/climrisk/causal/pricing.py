@@ -197,6 +197,12 @@ def run(
         "spread_late": fit(df[df["vintage"] >= split], "spread_bp", f"Spread, from {split}"),
         "spread_pd": fit(pd_df, "spread_bp", "Spread, PD sample"),
         "default_pd": fit(pd_df, "default_pp", "24-month default, PD sample"),
+        "default_early": fit(
+            pd_df[pd_df["vintage"] < split], "default_pp", f"24-month default, before {split}"
+        ),
+        "default_late": fit(
+            pd_df[pd_df["vintage"] >= split], "default_pp", f"24-month default, from {split}"
+        ),
     }
     fig_pricing_vs_default(
         results["spread_pd"],
