@@ -445,3 +445,42 @@ Record the date, context, alternatives, rationale and consequences for each deci
   nothing.
 - **Same eligibility rule for everyone.** Excluding only defaults with incomplete follow-up
   would bias the default rate downwards.
+
+## D023 — Test results of the PD models and their consequences (Phase 7)
+
+**Results (test vintages 2021–2024, one evaluation each, pre-registered in D021–D022).**
+
+- **Discrimination, D004 target:**
+  - primary scorecard AUC 0.782 [0.774, 0.792];
+  - LightGBM 0.797 [0.789, 0.806];
+  - paired difference versus base scorecard +0.015 [+0.011, +0.020].
+- **Discrimination, credit-default target (eligible loans):** LightGBM − base scorecard +0.030
+  [+0.018, +0.041].
+- **Climate features:** no gain with either target: −0.0002 [−0.0008, +0.0003] for D004 and
+  +0.0002 [−0.0004, +0.0008] for credit default. The validation gain (+0.0022) did not
+  replicate.
+- **Calibration of the TTC PD on identical eligible test loans:** observed / predicted is 1.95
+  for D004 and 1.41 for credit default. The log gap is roughly halved when the target and model are changed; this is a
+  descriptive sensitivity comparison, not a causal attribution to temporary episodes.
+  Among loans current at D+12, 52–71% in the reported post-2015 vintages have a modification
+  or payment-deferral flag during follow-up. Under-prediction remains for 2022–2023; the
+  credit-default target also includes transfers and unobserved endpoints conservatively.
+
+**Consequences.**
+
+- **Model choice:** D019's choice of the scorecard is not supported out of time. The scorecard
+  stays the documented main model, because the pre-registered choice is not changed after
+  seeing the test. LightGBM's consistent advantage is reported as a model-risk finding that
+  would trigger a challenger review.
+- **Possible cause of the gap:** interactions between risk factors ("risk layering", e.g.
+  high DTI together with high CLTV), which an additive scorecard cannot represent. This is
+  untested.
+- **Climate features:** no incremental out-of-time ranking gain is demonstrated for these
+  static coast variables, models and samples, conditional on borrower, loan and state.
+  This does not establish that climate risk has no predictive value generally. Phase 5
+  event-study results and Phase 6 conditional pricing/default associations address
+  different questions; the Phase 6 associations are not causal effects.
+- **Phase 8:** the TTC PD under-predicts recent vintages even for credit default (×1.41).
+  Phase 8 scenarios must not treat TTC PDs as a current-conditions forecast.
+- **Caveat:** intervals resample loans, not ZIP3; they omit within-ZIP3 dependence,
+  fitting and model-selection uncertainty and may understate uncertainty.

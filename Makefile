@@ -3,7 +3,7 @@
 help:
 	@echo "setup: install dependencies and pre-commit hooks"
 	@echo "lint / format / test / check: project checks"
-	@echo "data: ingest and validate; other pipeline stages: pending"
+	@echo "data / features / causal / models / report: reproduce pipeline stages"
 
 setup:
 	uv sync --frozen
@@ -28,7 +28,15 @@ causal:
 	uv run --frozen python -m climrisk.causal.pricing
 
 models:
-	@echo "TODO phases 7-8: PD model, stress test"
+	uv run --frozen python -m climrisk.features.pd_features
+	uv run --frozen python -m climrisk.features.credit_default
+	uv run --frozen python -m climrisk.models.scorecard
+	uv run --frozen python -m climrisk.models.gbm
+	uv run --frozen python -m climrisk.models.calibration
+	uv run --frozen python -m climrisk.models.ttc
+	uv run --frozen python -m climrisk.models.ablation
+	uv run --frozen python -m climrisk.models.final
+	uv run --frozen python -m climrisk.models.sensitivity
 
 report:
 	uv run --frozen python -m climrisk.viz.eda
