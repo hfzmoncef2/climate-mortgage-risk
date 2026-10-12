@@ -1,3 +1,13 @@
 # Pricing analysis (Phase 6): is climate risk priced in mortgage rates?
 sources:
   pmms_url: "https://fred.stlouisfed.org/graph/fredgraph.csv?id=MORTGAGE30US"
+  counties_url: "https://www2.census.gov/geo/tiger/GENZ2020/shp/cb_2020_us_county_500k.zip"
+  coastline_url: "https://www2.census.gov/geo/tiger/TIGER2020/COASTLINE/tl_2020_us_coastline.zip"
+
+coast:
+  hurricane_coasts: ["Atlantic", "Gulf"]
+  projection_epsg: 5070
+  shoreline_km: 1
+  near_coast_km: 50
+  dissolved_2010_counties:
+    "51515": "51019"  # Bedford city -> Bedford County, VA

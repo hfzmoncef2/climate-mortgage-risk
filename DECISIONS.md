@@ -288,3 +288,18 @@ Record the date, context, alternatives, rationale and consequences for each deci
   follow-up; denominator = all eligible defaults in the group. Missing endpoint
   observations and prepaid loans do not count as current. This does not prove that
   the loan remained current continuously between cure and follow-up end.
+
+## D016 — Physical Atlantic/Gulf coastal proximity
+
+- Distance from county polygons to Census TIGER 2020 Atlantic/Gulf coastline,
+  projected to EPSG:5070 and expressed in km. Pacific/Great Lakes coastlines are
+  excluded from this proxy for mainland hurricane-coast proximity.
+- County distance is the minimum polygon-to-coast distance, not a property's or
+  housing centroid's distance; a coastal county can assign zero distance to inland homes.
+- Aggregate with 2010 ZIP3 housing weights; report matched coverage and renormalise
+  available weights. Post-2010 county codes map to predecessors; Bedford city (51515)
+  takes Bedford County's (51019) distance. These boundary mappings are approximate.
+- Static geography avoids using future disaster occurrences, but 2020 boundaries and
+  shoreline geometry plus 2010 housing weights remain retrospective. EPSG:5070 is
+  intended for CONUS; distances for Alaska, Hawaii and territories need caution.
+- Coastal proximity is not hurricane probability, intensity or property-level flood risk.
