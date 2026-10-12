@@ -11,3 +11,9 @@ coast:
   near_coast_km: 50
   dissolved_2010_counties:
     "51515": "51019"  # Bedford city -> Bedford County, VA
+
+pricing:
+  origination_lag_months: 2  # Approximate origination month from first payment.
+  orig_term: 360
+  bins: {fico: 20, ltv: 5, dti: 5}
+  period_split: 2012
