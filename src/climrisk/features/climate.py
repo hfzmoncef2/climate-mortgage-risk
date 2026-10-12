@@ -14,7 +14,7 @@ Outputs:
         zip3, month,
         hit_share_<def>   share of the ZIP3's housing in counties hit that month (0-1)
         events_<def>      expected number of disasters hitting a home that month
-        exposure_<def>    sum of events_<def> over the previous lookback_months
+        exposure_<def>    lagged rolling sum of events_<def> (D011)
     reports/climate_summary.md
 for <def> in {main, broad} (configs/climate.yaml).
 
@@ -105,6 +105,7 @@ WHERE declaration_type IN ({sql_codes(cfg["events"]["declaration_types"])})
 def climate_query(cfg: dict) -> str:
     e = cfg["exposure"]
     lookback = int(e["lookback_months"])
+    lag = int(e.get("availability_lag_months", 0))
     hits = []
     for d in DEFINITIONS:
         hits.append(f"""
@@ -128,7 +129,7 @@ hits_{d} AS (
     )
     exposure = ",\n    ".join(
         f"coalesce(sum(events_{d}) OVER (PARTITION BY zip3 ORDER BY month "
-        f"ROWS BETWEEN {lookback} PRECEDING AND 1 PRECEDING), 0) AS exposure_{d}"
+        f"ROWS BETWEEN {lookback + lag} PRECEDING AND {lag + 1} PRECEDING), 0) AS exposure_{d}"
         for d in DEFINITIONS
     )
     return f"""

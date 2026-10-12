@@ -34,6 +34,7 @@ events:
     require_household_assistance: false
 exposure:
   lookback_months: 120
+  availability_lag_months: 3  # Exclude the three most recent completed months (D011).
   grid_start: '1990-01-01'
   grid_end: '2026-03-01'
 county_recode:

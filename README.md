@@ -141,7 +141,7 @@ Outputs are `data/processed/zip3_county_weights.parquet` and
 
 The main disaster definition requires household assistance; the broad definition
 adds storm types without that requirement. Exposure sums weighted events over the
-previous 120 months, excluding the current month. Housing weights use Census 2010
+120-month window ending four months before the measurement month (D011). Housing weights use Census 2010
 HUPT housing counts for each ZCTA-county part. Static 2010 weights and revised
 FEMA declarations remain retrospective inputs; see D002 and D009-D010 for limitations.
 NRI is reserved for a potential later robustness analysis.

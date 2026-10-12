@@ -201,7 +201,8 @@ Record the date, context, alternatives, rationale and consequences for each deci
 
 - Use expected qualifying disasters per home over the preceding 120 months,
   weighted by ZIP3-county housing allocation; exclude the current month.
-- Grid starts January 1990, providing a full lookback from January 2000 onward.
+- Grid starts January 1990; with the three-month availability lag (D011), a full
+  120-month lookback is available from April 2000 onward.
 - The user reports NRI download restrictions from Switzerland; these have not
   been independently reproduced. A recent NRI snapshot also cannot represent
   information contemporaneously available for early loan vintages.
@@ -212,3 +213,15 @@ Record the date, context, alternatives, rationale and consequences for each deci
   at origination. Assess declaration-date lags and historical-weight sensitivity.
 - ZCTA housing counts approximate USPS ZIP geography. ZIP3 aggregation cannot
   identify which individual properties were affected or establish causal effects.
+
+## D011 — Information availability
+
+- Exposure excludes the current month and the three most recent completed months
+  (`availability_lag_months: 3`), allowing for FEMA county additions after an event.
+- Exact window at month t: t-123 through t-4 inclusive (120 months). This conservative
+  boundary follows the lagged rolling-window implementation; it does not include t-3.
+- Census 2010 weights and the current FEMA file are used for all years: the analysis
+  is retrospective, not a real-time replication of what lenders knew. A fixed lag
+  does not reconstruct historical declaration revisions or guarantee availability.
+- Declaration-based exposure reflects administrative decisions as well as physical
+  risk; a physical measure (coastal counties / NOAA hurricane tracks) is planned for Phase 6.

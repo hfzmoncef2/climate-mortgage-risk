@@ -55,7 +55,12 @@ def fema_csv() -> str:
 
 def config() -> dict:
     cfg = climate.load_config()
-    cfg["exposure"] = {"lookback_months": 3, "grid_start": "2017-06-01", "grid_end": "2018-01-01"}
+    cfg["exposure"] = {
+        "lookback_months": 3,
+        "availability_lag_months": 0,
+        "grid_start": "2017-06-01",
+        "grid_end": "2018-01-01",
+    }
     return cfg
 
 
@@ -145,3 +150,20 @@ def test_post_2010_county_codes_are_recoded(built):
 def test_manual_zip3_follows_its_county(built):
     rows = climate_rows(built, "772")  # Houston P.O. boxes -> Harris County
     assert rows[date(2017, 9, 1)][0] == pytest.approx(1.0)
+
+
+def test_availability_lag_delays_exposure(tmp_path):
+    raw, geo = tmp_path / "raw", tmp_path / "geo"
+    raw.mkdir()
+    (raw / "crosswalk.txt").write_text(CROSSWALK)
+    (raw / "fema.csv").write_text(fema_csv())
+    census.parse(raw / "crosswalk.txt", geo / "zcta_county.parquet")
+    fema.parse(raw / "fema.csv", tmp_path / "declarations.parquet")
+    cfg = config()
+    cfg["exposure"]["availability_lag_months"] = 1
+    out = tmp_path / "processed"
+    climate.run(geo, tmp_path / "declarations.parquet", out, tmp_path / "s.md", cfg)
+    exposure = {m: r[4] for m, r in climate_rows(out, "770").items()}
+    assert exposure[date(2017, 9, 1)] == pytest.approx(0)
+    assert exposure[date(2017, 10, 1)] == pytest.approx(2 / 3)
+    assert exposure[date(2018, 1, 1)] == pytest.approx(2 / 3)  # September still counts

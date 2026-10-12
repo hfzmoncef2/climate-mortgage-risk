@@ -112,7 +112,9 @@ def default_by_vintage(con: duckdb.DuckDBPyConnection) -> list[tuple]:
                count(default_24m) AS labelled,
                sum(default_24m) AS defaults,
                100.0 * avg(default_24m) AS default_rate_pct,
-               avg(overlaps_covid::INT) > 0.5 AS covid_window  -- most loans excluded
+               avg(overlaps_covid::INT) > 0.5 AS covid_window,  -- most loans excluded
+               count(*) FILTER (WHERE in_pd_sample) AS pd_loans,
+               100.0 * avg(default_24m) FILTER (WHERE in_pd_sample) AS pd_default_rate_pct
         FROM loans GROUP BY vintage HAVING count(default_24m) > 0 ORDER BY vintage
     """).fetchall()
 
@@ -223,28 +225,46 @@ def _save(fig, path: Path) -> None:
 
 
 def fig_default_by_vintage(rows: list[tuple], path: Path) -> None:
+    """Bars: all labelled loans. Dots: PD modelling sample (the population the models use)."""
+    from matplotlib.lines import Line2D
     from matplotlib.patches import Patch
 
     fig, ax = plt.subplots(figsize=(9, 4.4))
     vintages = [r[0] for r in rows]
-    colors = [COLORS["muted"] if r[4] else COLORS["focus"] for r in rows]
-    ax.bar(vintages, [r[3] for r in rows], color=colors, width=0.7)
-    peak = max((r for r in rows if not r[4]), key=lambda r: r[3])
+    ax.bar(vintages, [r[3] for r in rows], color=COLORS["axis"], width=0.7, zorder=1)
+    pd_rows = [r for r in rows if r[5] and r[6] is not None]
+    ax.scatter(
+        [r[0] for r in pd_rows],
+        [r[6] for r in pd_rows],
+        s=36,
+        color=COLORS["focus"],
+        edgecolors=COLORS["surface"],
+        linewidths=1.5,
+        zorder=3,
+    )
+    peak = max(pd_rows, key=lambda r: r[6])
     ax.annotate(
-        f"{peak[3]:.1f}%",
-        (peak[0], peak[3]),
-        xytext=(0, 4),
+        f"{peak[6]:.1f}%",
+        (peak[0], peak[6]),
+        xytext=(8, 0),
         textcoords="offset points",
-        ha="center",
+        va="center",
         color=COLORS["ink"],
     )
-    ax.set_title(f"24-month default rate peaked at {peak[3]:.1f}% for {peak[0]} loans")
+    ax.set_title(f"24-month default rate peaked at {peak[6]:.1f}% for {peak[0]} loans")
     ax.set_ylabel("Loans in default within 24 months (%)")
     ax.set_xticks(vintages, [str(v) if v % 2 == 0 else "" for v in vintages])
     ax.legend(
         handles=[
-            Patch(color=COLORS["focus"], label="Labelled loans (majority outside COVID window)"),
-            Patch(color=COLORS["muted"], label="Majority overlap COVID window"),
+            Patch(color=COLORS["axis"], label="All labelled loans"),
+            Line2D(
+                [],
+                [],
+                marker="o",
+                linestyle="",
+                color=COLORS["focus"],
+                label="PD modelling sample (D005)",
+            ),
         ],
         loc="upper left",
         bbox_to_anchor=(0, -0.08),
@@ -254,9 +274,9 @@ def fig_default_by_vintage(rows: list[tuple], path: Path) -> None:
     ax.text(
         0,
         -0.2,
-        "Default = 90+ days past due, REO or loss exit within 24 months of "
-        "first payment; complete windows only.\n"
-        "Source: Freddie Mac SFLLD.",
+        "No dot: vintage excluded (24-month window overlaps COVID forbearance). Default = 90+ "
+        "days past due,\nREO or loss exit within 24 months of first payment; complete windows "
+        "only. Source: Freddie Mac SFLLD.",
         va="top",
         transform=ax.transAxes,
         color=COLORS["muted"],
@@ -491,9 +511,17 @@ def run(
         "## 1. Default rate by vintage",
         f"![Default rate by vintage]({rel / 'fig1_default_by_vintage.png'})",
         md_table(
-            ["vintage", "labelled", "defaults", "default_rate_pct", "covid_window"],
+            [
+                "vintage",
+                "labelled",
+                "defaults",
+                "default_rate_pct",
+                "covid_window",
+                "pd_loans",
+                "pd_default_rate_pct",
+            ],
             vintage,
-            {3: pct},
+            {3: pct, 6: pct},
         ),
         "## 2. Climate disasters by year",
         f"![Disasters by year]({rel / 'fig2_disasters_by_year.png'})",

@@ -101,3 +101,19 @@ def test_run_writes_all_figures_and_tables(processed, tmp_path):
     ]
     assert report.read_text().count("![") == 5
     assert "| vintage |" in report.read_text()
+
+
+def test_vintage_rates_separate_labelled_and_pd_populations():
+    with duckdb.connect() as con:
+        con.execute("""
+            CREATE TABLE loans AS SELECT * FROM (VALUES
+                (2007, 1, false, true), (2007, 0, false, true),
+                (2007, 1, false, false), (2007, NULL, false, false),
+                (2020, 0, true, false))
+                l(vintage, default_24m, overlaps_covid, in_pd_sample)
+        """)
+        rows = eda.default_by_vintage(con)
+    assert rows[0][1:3] == (3, 2)
+    assert rows[0][3] == pytest.approx(200 / 3)
+    assert rows[0][5:] == (2, 50.0)
+    assert rows[1][5:] == (0, None)
