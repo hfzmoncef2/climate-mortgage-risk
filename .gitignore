@@ -17,3 +17,4 @@ reports/*.aux
 reports/*.log
 reports/*.out
 reports/*.pdf
+!reports/report.pdf

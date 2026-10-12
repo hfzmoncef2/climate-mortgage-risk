@@ -8,6 +8,8 @@ geography to answer that question end to end: from a causal event study to the p
 coastal risk, an out-of-time probability-of-default (PD) model, measured loss given default
 (LGD) and an expected-loss stress test.
 
+📄 **Full report (IEEE format, 6 pages):** [reports/report.pdf](reports/report.pdf)
+
 ![Stress test: a hurricane vs a recession](reports/figures/fig13_stress_expected_loss.png)
 
 ## Key findings
