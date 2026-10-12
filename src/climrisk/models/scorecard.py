@@ -1,7 +1,8 @@
 """Baseline PD model: weight-of-evidence (WoE) scorecard with logistic regression (Phase 7).
 
 The banking standard. Each feature is cut into bins fitted on the training sample:
-    numeric      quantile bins + a 'missing' bin
+    numeric      quantile bins, with a separate bin for a point mass at the minimum,
+                 plus a 'missing' bin
     categorical  one bin per category; rare ones (< min_bin_share) pooled into 'other'
 Each bin is replaced by its weight of evidence, WoE = ln(%goods / %bads): positive = safer
 than average. A logistic regression on the WoE columns gives the PD. Information value
@@ -10,6 +11,7 @@ than average. A logistic regression on the WoE columns gives the PD. Information
 Feature selection (training data only, standard scorecard practice):
     1. drop features with IV < min_iv (no stable signal);
     2. among WoE columns correlated above max_corr, keep the one with the highest IV;
+       Features in `force` bypass the IV and correlation filters, but not sign checks.
     3. refit, dropping the lowest-IV feature with a positive (wrong-sign) coefficient,
        until every coefficient is negative (higher WoE = safer = lower PD).
 
@@ -36,7 +38,7 @@ from sklearn.linear_model import LogisticRegression
 from climrisk.causal import event_study as es
 from climrisk.features import pd_features
 from climrisk.features.target import PROCESSED_DIR
-from climrisk.models.metrics import classification_metrics
+from climrisk.models.metrics import classification_metrics, quantile_edges
 from climrisk.viz.eda import md_table
 
 MISSING, OTHER = "missing", "other"
@@ -72,9 +74,8 @@ class WoEBinner:
 
     def fit(self, x: pd.Series, y: np.ndarray) -> WoEBinner:
         if self.numeric:
-            v = pd.to_numeric(x, errors="coerce").dropna().to_numpy(dtype=float)
-            qs = np.quantile(v, np.linspace(0, 1, self.n_bins + 1)[1:-1]) if len(v) else []
-            self.edges = np.unique(qs)
+            v = pd.to_numeric(x, errors="coerce").to_numpy(dtype=float)
+            self.edges = quantile_edges(v, self.n_bins)
         else:
             share = x.astype(str).value_counts(normalize=True)
             self.keep = set(share[share >= self.min_share].index)
@@ -90,9 +91,12 @@ class WoEBinner:
         if self.numeric:
             lo = np.concatenate([[-np.inf], self.edges])
             hi = np.concatenate([self.edges, [np.inf]])
-            ranges = {
-                f"b{i:02d}": f"[{a:g}, {c:g})" for i, (a, c) in enumerate(zip(lo, hi, strict=True))
-            }
+            labels = [f"[{a:g}, {c:g})" for a, c in zip(lo, hi, strict=True)]
+            v = pd.to_numeric(x, errors="coerce").dropna()
+            if len(self.edges) and len(v) and self.edges[0] == np.nextafter(v.min(), np.inf):
+                labels[0] = f"= {v.min():g}"
+                labels[1] = f"({v.min():g}, {hi[1]:g})"
+            ranges = {f"b{i:02d}": label for i, label in enumerate(labels)}
             self.table.index = [ranges.get(i, i) for i in self.table.index]
         return self
 
@@ -111,6 +115,7 @@ class Scorecard:
     C: float = 1.0
     min_iv: float = 0.0
     max_corr: float = 1.0
+    force: list = field(default_factory=list)  # Skip IV/correlation filters, not sign checks
     binners: dict = field(default_factory=dict)
     selected: list = field(default_factory=list)
     dropped: dict = field(default_factory=dict)
@@ -146,7 +151,7 @@ class Scorecard:
         self.dropped = {}
         candidates = []
         for f in by_iv:
-            if self.binners[f].iv < self.min_iv:
+            if self.binners[f].iv < self.min_iv and f not in self.force:
                 self.dropped[f] = f"IV < {self.min_iv:g}"
             else:
                 candidates.append(f)
@@ -158,7 +163,7 @@ class Scorecard:
         keep: list[str] = []
         for i, f in enumerate(candidates):
             clash = [g for g in keep if abs(corr[i, candidates.index(g)]) > self.max_corr]
-            if clash:
+            if clash and f not in self.force:
                 self.dropped[f] = f"WoE corr > {self.max_corr:g} with {clash[0]}"
             else:
                 keep.append(f)

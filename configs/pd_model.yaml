@@ -42,3 +42,13 @@ ttc:                         # through-the-cycle anchoring of the final scorecar
   fit_splits: [train, validation]   # the final model is refitted on 2004-2018
   # long-run default rate = simple average of the yearly (vintage) default rates, so that
   # large vintages do not dominate; the PDs are shifted (ranking unchanged) to match it
+
+ablation:                    # does adding the climate features improve the PD model?
+  bootstrap: 200             # paired bootstrap of the validation loans for the AUC gain
+  seed: 7
+  coastal_share: 0.5         # subgroup: ZIP3 with at least half the homes near the coast
+  feature_sets:              # climate features added to the base model, one set at a time
+    climate_all: [exposure_main, exposure_broad, recent_events_12m, near_coast_share,
+                  log_dist_coast]
+    climate_static: [near_coast_share, log_dist_coast]   # geography only: no time trend
+  psi_bins: 10               # population stability index, train -> validation

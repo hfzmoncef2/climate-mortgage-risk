@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from climrisk.models.metrics import classification_metrics
+from climrisk.models.metrics import classification_metrics, psi, quantile_edges
 from climrisk.models.scorecard import MISSING, OTHER, Scorecard, WoEBinner
 
 
@@ -82,3 +82,36 @@ def test_selection_drops_weak_and_redundant_features():
     assert card.dropped[dup].startswith("WoE corr")
     assert (card.model.coef_[0] < 0).all()
     assert card.summary().set_index("feature").loc["noise", "status"] != "kept"
+
+
+def test_forced_features_skip_the_iv_filter():
+    rng = np.random.default_rng(4)
+    n = 20_000
+    df = pd.DataFrame({"fico": rng.integers(600, 820, n).astype(float), "weak": rng.normal(size=n)})
+    logit = -4 - 0.02 * (df["fico"] - 700) + 0.05 * df["weak"]
+    y = (rng.uniform(size=n) < 1 / (1 + np.exp(-logit))).astype(int).to_numpy()
+    card = Scorecard(["fico", "weak"], [], min_iv=0.5, force=["weak"]).fit(df, y)
+    assert card.binners["weak"].iv < 0.5 and "weak" in card.selected
+
+
+def test_psi_is_zero_for_the_same_distribution_and_large_for_a_shift():
+    rng = np.random.default_rng(5)
+    x = rng.normal(size=50_000)
+    assert psi(x, rng.normal(size=50_000)) < 0.01
+    assert psi(x, rng.normal(1.0, 1.0, 50_000)) > 0.25
+    with_missing = np.where(rng.uniform(size=50_000) < 0.3, np.nan, rng.normal(size=50_000))
+    assert psi(x, with_missing) > 0.25  # 30% missing vs none is a large shift
+
+
+def test_point_mass_at_zero_gets_its_own_bin():
+    rng = np.random.default_rng(6)
+    n = 20_000
+    x = np.where(rng.uniform(size=n) < 0.93, 0.0, rng.exponential(1.0, n))
+    y = (rng.uniform(size=n) < np.where(x > 0, 0.05, 0.01)).astype(int)
+    b = WoEBinner("recent_events", numeric=True).fit(pd.Series(x), y)
+    w = b.transform(pd.Series([0.0, 0.5]))
+    assert w[0] > 0 > w[1]
+    assert b.iv > 0.05
+    shifted = np.where(rng.uniform(size=n) < 0.80, 0.0, rng.exponential(1.0, n))
+    assert psi(x, shifted) > 0.05
+    assert len(quantile_edges(np.arange(1000.0), 10)) == 9
