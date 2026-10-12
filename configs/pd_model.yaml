@@ -59,3 +59,9 @@ final:                       # frozen on the validation results, BEFORE the test
   climate_features: [near_coast_share, log_dist_coast]   # primary = scorecard + these (D021)
   bootstrap: 500             # bootstrap of test loans for the confidence intervals
   seed: 11
+
+credit_default:              # sensitivity target (D015, D022), fixed before estimation
+  follow_up_months: 12       # outcome of each D004 default observed 12 months after its first 90+ month
+  # temporary episode (0): observed current ("00") at default month + 12, or voluntary payoff
+  #   within the follow-up, with no loss exit or REO before; everything else stays a default (1)
+  # eligibility, for every loan: 24-month window end + follow_up_months <= performance cutoff

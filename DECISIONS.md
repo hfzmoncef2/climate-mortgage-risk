@@ -414,3 +414,34 @@ Record the date, context, alternatives, rationale and consequences for each deci
 - **Caveat:** intervals resample loans, not ZIP3; they exclude within-ZIP3 dependence,
   model fitting and validation-based selection uncertainty and may understate uncertainty.
 - This choice is fixed before any test-vintage evaluation (commit timestamp).
+
+## D022 — Credit-default sensitivity target (pre-registered, implements D015)
+
+**Decision.**
+- **Target.** `credit_default_24m` equals 0 for every loan with `default_24m = 0`. For a D004
+  default whose first default month is D, it equals 0 (temporary episode) only if, with no
+  loss exit (02, 03, 09) or REO (RA) in (D, D+12]:
+  - the loan is observed current (`00`) at D+12; or
+  - it is paid off voluntarily (zero-balance code 01) in (D, D+12].
+  Every other D004 default stays 1: loss or REO, still delinquent, transferred, or no
+  observation at D+12. When in doubt the rule counts a default, so it is conservative.
+- **Eligibility, applied to every loan, defaulted or not:** the PD sample, with window end
+  + 12 months ≤ performance cutoff (2026-03-31). The 2024 vintage and part of 2023 drop out.
+- **Planned analyses, fixed before estimation:**
+  1. D004 and credit-default rates by vintage.
+  2. The D021 primary scorecard procedure refitted on 2004–2018 with this target and
+     through-the-cycle anchored to its own long-run rate, plus LightGBM base (early stopping
+     on validation). Both are evaluated on the eligible test loans: AUC with a 95% bootstrap
+     interval, and calibration overall and by vintage.
+
+**Why.**
+- **Flags are not comparable over time.** Disaster and forbearance flags are blank before
+  about 2013, so a definition based on them would not be comparable across vintages. The
+  payment path is.
+- **The test gap may be partly temporary.** The test under-prediction (observed/TTC = 1.9) may
+  partly reflect temporary, disaster- or forbearance-related delinquency. Phase 5 found
+  1% loss for disaster-flagged defaults versus 16% for others.
+- **D004 stays the primary target.** This variant is reported next to it and replaces
+  nothing.
+- **Same eligibility rule for everyone.** Excluding only defaults with incomplete follow-up
+  would bias the default rate downwards.
