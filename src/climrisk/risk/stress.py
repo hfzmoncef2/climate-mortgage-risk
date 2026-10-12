@@ -14,6 +14,9 @@ Scenarios:
                         coastal share), at the LGD of disaster-flagged defaults
     hurricane in a      recession + the hurricane's extra PD at the high LGD of
     recession           disaster-flagged defaults
+    recent conditions   baseline with PD x the observed / TTC ratio of the test vintages
+Break-even: how many times larger the hurricane's default effect would need to be for its
+loss to match the recession's increment.
 These are illustrative, transparent scenarios built from the project's estimates, not
 forecasts; each assumption is in configs/stress.yaml.
 
@@ -70,7 +73,9 @@ def expected_loss(pd_: np.ndarray, lgd: float, ead: np.ndarray) -> float:
     return float(np.sum(np.clip(pd_, 0, 1) * lgd * ead))
 
 
-def scenario_table(book: pd.DataFrame, lgd: dict, m: float, extra_pd: np.ndarray) -> pd.DataFrame:
+def scenario_table(
+    book: pd.DataFrame, lgd: dict, m: float, extra_pd: np.ndarray, recent_factor: float = 1.0
+) -> pd.DataFrame:
     """EL (% of book balance) of each scenario at each LGD level."""
     ead, p = book["ead"].to_numpy(), book["pd_ttc"].to_numpy()
     p_down = np.minimum(p * m, 1)
@@ -87,10 +92,26 @@ def scenario_table(book: pd.DataFrame, lgd: dict, m: float, extra_pd: np.ndarray
             ("Recession (2007-08 type)", lvl, down),
             ("Hurricane in a recession", lvl, down + hurricane_stressed),
             ("Hurricane alone (increment)", lvl, hurricane),
+            (
+                "Baseline, recent-conditions PD",
+                lvl,
+                expected_loss(p * recent_factor, lgd["benign"][lvl], ead),
+            ),
         ]
     t = pd.DataFrame(rows, columns=["scenario", "level", "el"])
     t["el_pct"] = 100 * t["el"] / total
     return t.pivot(index="scenario", columns="level", values="el_pct")[list(LEVELS)]
+
+
+def break_even(table: pd.DataFrame) -> dict[str, float]:
+    """How many times larger the hurricane's default effect would have to be for its expected
+    loss to match the recession's increment over the baseline (central recession), at the
+    central and at the high disaster LGD."""
+    gap = table.loc["Recession (2007-08 type)", "central"] - table.loc["Baseline", "central"]
+    inc = table.loc["Hurricane alone (increment)"]
+    return {
+        lvl: float(gap / inc[lvl]) if inc[lvl] > 0 else float("inf") for lvl in ("central", "high")
+    }
 
 
 def fig_stress(table: pd.DataFrame, path: Path) -> None:
@@ -172,7 +193,9 @@ def run(
     effect = float(s["hurricane"]["delinquency_effect_pp"]) / 100
     extra_pd = effect * book["near_coast_share"].fillna(0).to_numpy()
 
-    table = scenario_table(book, lgd, m, extra_pd)
+    recent = float(s.get("recent_conditions_pd_factor", 1.0))
+    table = scenario_table(book, lgd, m, extra_pd, recent)
+    k = break_even(table)
     log.info("Downturn multiplier %.2f; EL (%% of balance):\n%s", m, table.round(4))
     fig_stress(table, reports_dir / "figures" / "fig13_stress_expected_loss.png")
 
@@ -203,6 +226,12 @@ def run(
             {1: "{:.2f}", 2: "{:.2f}", 3: "{:.2f}"},
         ),
         "## Expected loss by scenario (% of book balance)",
+        "The TTC PD under-predicted the test vintages (D023): the recent-conditions row "
+        "scales the baseline "
+        f"PD by {recent:.2f}, the observed / TTC ratio of the D004 primary model on the "
+        "2021-2024 test vintages. The hurricane increment does not "
+        "depend on the PD level; a "
+        "higher PD level would raise the recession loss further.",
         "`central_usd_m`: central expected loss in million dollars for this book. The "
         "hurricane in a recession uses the high disaster LGD (forbearance may cure less when "
         "house prices fall).",
@@ -212,9 +241,19 @@ def run(
             {1: "{:.4f}", 2: "{:.4f}", 3: "{:.4f}", 4: "{:.2f}"},
         ),
     ]
+    sections += [
+        "## How robust is the hurricane conclusion?",
+        "For the hurricane's expected loss to match the recession's increment over the "
+        f"baseline, its default effect would have to be {k['central']:,.0f} times larger "
+        f"at the central disaster LGD, or {k['high']:,.0f} times larger at the high "
+        "disaster LGD, on top of the already severe assumptions of the scenario. "
+        "These are linear loss-equivalent multiples, not feasible probability forecasts: "
+        "large multiples would exceed a 100% default probability and are not re-simulated "
+        "with probability caps.",
+    ]
     (reports_dir / "stress_test.md").write_text("\n\n".join(sections) + "\n", encoding="utf-8")
     log.info("Wrote %s", reports_dir / "stress_test.md")
-    return {"table": table, "multiplier": m, "lgd": lgd}
+    return {"table": table, "multiplier": m, "lgd": lgd, "break_even": k}
 
 
 def main() -> None:

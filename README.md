@@ -12,7 +12,8 @@ coastal risk, an out-of-time probability-of-default (PD) model, measured loss gi
 
 ## Key findings
 
-1. **Hurricanes cause a short delinquency spike.** In a stacked event study with 338 treated ZIP3-events, hurricanes raise 60+ day delinquency by **+1.15 pp (≈ +42%)** in
+1. **Hurricanes cause a short delinquency spike.** In a stacked event study with 338 treated ZIP3-events
+   (173 hurricane / tropical-storm ZIP3-events), hurricanes raise 60+ day delinquency by **+1.15 pp (≈ +42%)** in
    the six months after the event month. The effect fades within about a year. Flood estimates fail
    the pre-trend tests and are not interpreted causally.
 2. **Those defaults rarely become losses.** Disaster-flagged defaults frequently return to current status or are paid off;
@@ -23,7 +24,7 @@ coastal risk, an out-of-time probability-of-default (PD) model, measured loss gi
      same era.
 3. **Coastal loans carry a small rate premium.** At equal FICO, LTV and DTI, within the same state and
    month, loans near the hurricane coast default about **26%** more often. This holds both
-   before and after 2012. They pay a **~2 bp** rate premium, A precise comparison with expected credit loss remains sensitive to
+   before and after 2012. They pay a **~2 bp** rate premium. A precise comparison with expected credit loss remains sensitive to
    the LGD and horizon assumptions.
 4. **Static climate features show no incremental test ranking gain.** In a pre-registered out-of-time
    test (selection on 2004–2018, refit on 2004–2018, test 2021–2024), static climate features show **no demonstrated gain** in discriminatory
@@ -33,8 +34,10 @@ coastal risk, an out-of-time probability-of-default (PD) model, measured loss gi
    - a 2008-type recession raises 24-month expected loss to **0.59%** of balance, ≈ 67 times
      the baseline;
    - a simultaneous hurricane hit on every coastal ZIP3, under deliberately severe
-     assumptions, adds **0.0102% under the high disaster-LGD scenario**. This is a scenario result,
-     not an upper bound on possible hurricane losses.
+     assumptions, adds **0.0001%** of balance (**0.0102%** under the high disaster-LGD
+     scenario). This is a scenario result, not an upper bound on possible hurricane losses:
+     even at the high disaster LGD, the hurricane's default effect would have to be 57 times
+     larger (about 65% extra default probability for fully coastal loans) to match the recession.
 
 **Scope.** These results cover the lender's or guarantor's credit loss over 24 months under
 current servicing practices. Property damage, insurance costs and long-run coastal

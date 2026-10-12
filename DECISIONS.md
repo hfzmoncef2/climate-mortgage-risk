@@ -551,3 +551,32 @@ loss-making but their losses are not published. Scenario ranges make that assump
   recent default rates, so the baseline absolute loss level may be understated.
 - Only the lender's or guarantor's credit loss is covered. Physical damage, insurance costs
   and long-run coastal house-price risk are out of scope.
+
+## D026 — Review fixes to Phase 8
+
+**Changes.**
+1. **LGD follow-up coverage.** A default without an exit counts as cured (or still
+   delinquent) only if its records reach D + 60 months, within the 2-month gap tolerated
+   by D006. Otherwise it is `incomplete_follow_up`, i.e. unresolved and covered by the
+   low/high scenarios. Before this fix, a loan whose records stopped early while current would
+   have received a zero loss. **Effect:** 1 default reclassified; all LGD estimates
+   unchanged.
+2. **Recent-conditions baseline.** The stress test also shows the baseline with the TTC PD
+   × 1.90, the observed / predicted ratio of the D004 primary model on the test vintages
+   (D023). The hurricane increment does not depend on the PD level. A higher PD level only
+   raises the recession loss when applied to that scenario.
+3. **Break-even of the hurricane scenario.** To match the recession's increment over the
+   baseline, the hurricane's default effect would have to be:
+   - about 4,000 times larger at the central disaster LGD. This is impossible, since it
+     exceeds a 100% default probability;
+   - 57 times larger at the high disaster LGD. That means about 65% extra default probability
+     for fully coastal loans; partially coastal ZIP3 are scaled by their coastal share.
+
+   These are loss-equivalent multiples, not forecasts.
+
+**Why.** An external review raised these points:
+- the PD calibration weakness spreads into the stress test;
+- the hurricane mapping is illustrative;
+- the LGD cure rule did not check follow-up coverage.
+
+The first two are now quantified. The third was a real bug, now fixed and tested.

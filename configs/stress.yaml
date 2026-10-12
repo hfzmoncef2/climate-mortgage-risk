@@ -25,3 +25,7 @@ scenarios:                     # 24-month expected loss of the recent book (test
     # 60+ day effect is used as if every extra delinquency became a D004 default), weighted
     # by the ZIP3's share of homes within 50 km of the hurricane coast; every coastal ZIP3 is
     # hit once in the 24 months (a deliberately severe, simultaneous event)
+
+  recent_conditions_pd_factor: 1.90    # observed / TTC PD of the D004 primary model on the
+                                       # 2021-2024 test vintages (reports/pd_final.md, D023);
+                                       # the TTC PD is not a current-conditions forecast

@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from climrisk.risk.stress import downturn_multiplier, lgd_levels, scenario_table
+from climrisk.risk.stress import break_even, downturn_multiplier, lgd_levels, scenario_table
 
 
 def test_lgd_levels_low_central_high():
@@ -33,7 +33,7 @@ def test_scenario_table_arithmetic():
     lvl = {"low": 0.1, "central": 0.2, "high": 0.4}
     lgd = {"benign": lvl, "downturn": {k: 2 * v for k, v in lvl.items()}, "disaster": lvl}
     extra = np.array([0.0, 0.01])
-    t = scenario_table(book, lgd, m=3.0, extra_pd=extra)
+    t = scenario_table(book, lgd, m=3.0, extra_pd=extra, recent_factor=2.0)
     base = (0.01 * 100 + 0.02 * 300) * 0.2  # central
     down = (0.03 * 100 + 0.06 * 300) * 0.4
     hurricane = 0.01 * 300 * 0.2
@@ -45,3 +45,11 @@ def test_scenario_table_arithmetic():
         100 * (down + stressed_hurricane) / 400
     )
     assert (t["low"] <= t["central"]).all() and (t["central"] <= t["high"]).all()
+
+    assert t.loc["Baseline, recent-conditions PD", "central"] == pytest.approx(
+        2 * t.loc["Baseline", "central"]
+    )
+    k = break_even(t)
+    gap = t.loc["Recession (2007-08 type)", "central"] - t.loc["Baseline", "central"]
+    assert k["central"] == pytest.approx(gap / t.loc["Hurricane alone (increment)", "central"])
+    assert k["high"] < k["central"]

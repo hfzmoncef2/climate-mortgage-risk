@@ -18,12 +18,19 @@ Recession PD multiplier m = 2.42 (observed default / mean TTC PD of the 2007, 20
 
 ## Expected loss by scenario (% of book balance)
 
+The TTC PD under-predicted the test vintages (D023): the recent-conditions row scales the baseline PD by 1.90, the observed / TTC ratio of the D004 primary model on the 2021-2024 test vintages. The hurricane increment does not depend on the PD level; a higher PD level would raise the recession loss further.
+
 `central_usd_m`: central expected loss in million dollars for this book. The hurricane in a recession uses the high disaster LGD (forbearance may cure less when house prices fall).
 
 | scenario | low | central | high | central_usd_m |
 |---|---|---|---|---|
 | Baseline | 0.0066 | 0.0088 | 0.0307 | 3.10 |
+| Baseline, recent-conditions PD | 0.0126 | 0.0168 | 0.0583 | 5.88 |
 | Hurricane | 0.0067 | 0.0090 | 0.0409 | 3.15 |
 | Hurricane alone (increment) | 0.0001 | 0.0001 | 0.0102 | 0.05 |
 | Hurricane in a recession | 0.4560 | 0.6018 | 0.7054 | 210.97 |
 | Recession (2007-08 type) | 0.4458 | 0.5916 | 0.6952 | 207.39 |
+
+## How robust is the hurricane conclusion?
+
+For the hurricane's expected loss to match the recession's increment over the baseline, its default effect would have to be 4,047 times larger at the central disaster LGD, or 57 times larger at the high disaster LGD, on top of the already severe assumptions of the scenario. These are linear loss-equivalent multiples, not feasible probability forecasts: large multiples would exceed a 100% default probability and are not re-simulated with probability caps.

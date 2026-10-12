@@ -9,10 +9,12 @@ For every D004 default (first default month D) with a complete follow-up (D + 60
                                               (= balance + accrued interest + expenses
                                                  - sale proceeds - recoveries)
                      voluntary payoff (01)    loss = 0
-                     no exit, current at the last month observed in the follow-up -> 0
+                     no exit, observed until the end of the follow-up (within the tolerated
+                     gap of D006) and current at the last month observed -> 0
                      loss exit with no published amount -> EAD x severity of the
                                               reported loss exits of the same period
-                     transfer (15, 16, 96) or still delinquent: unresolved
+                     transfer (15, 16, 96), still delinquent, or records ending before the
+                     follow-up does: unresolved
     LGD          sum(loss) / sum(EAD) over resolved defaults (exposure-weighted), with
                  bounds over all defaults: unresolved = no loss (low) or a loss exit at
                  the period's severity (high)
@@ -56,6 +58,7 @@ def load_config(path: Path = CONFIG_PATH) -> dict:
 def lgd_query(cfg: dict, target_cfg: dict, loans_path: Path) -> str:
     c = cfg["lgd"]
     h, back = int(c["follow_up_months"]), int(c["flag_lookback_months"])
+    gap = int(target_cfg["max_internal_gap_months"])  # tolerated missing months (D006)
     cutoff = date.fromisoformat(target_cfg["performance_cutoff"])
     loss = sql_codes(target_cfg["loss_zero_balance_codes"])
     prepay = sql_codes(target_cfg["prepay_zero_balance_codes"])
@@ -92,6 +95,7 @@ at_default AS (
 follow AS (
     SELECT d.loan_id,
            arg_max(p.delinquency_status, p.period) AS last_status,
+           max(p.period) AS last_period,
            max(p.cum_modification_cost) AS mod_cost
     FROM d JOIN perf p ON p.loan_id = d.loan_id
      AND p.period > d.dd AND p.period <= d.dd + INTERVAL {h} MONTH
@@ -122,6 +126,9 @@ resolved AS (
                    THEN 'paid_off'
                WHEN d.exit_code IS NOT NULL AND d.exit_date <= d.dd + INTERVAL {h} MONTH
                    THEN 'transferred'
+               -- Require records through the follow-up end, within the tolerated gap.
+               WHEN f.last_period IS NULL
+                 OR f.last_period < d.dd + INTERVAL {h - gap} MONTH THEN 'incomplete_follow_up'
                WHEN f.last_status = '00' THEN 'cured'
                ELSE 'still_delinquent'
            END AS resolution,
@@ -224,7 +231,8 @@ def run(
         f"complete {h}-month follow-up after the default month. EAD = balance at default. "
         "Loss = Freddie Mac actual loss for loss exits (the period's severity when the amount "
         "is not published), 0 for payoffs and loans current at the end of the follow-up. "
-        "Transfers and loans still delinquent are unresolved: their loss is unknown.",
+        "Transfers, loans still delinquent and loans whose records stop before the end of the "
+        "follow-up are unresolved: their loss is unknown.",
         "Columns: `resolved_pct` share of defaults with a known (or imputed) loss; "
         "`loss_exit_pct` share of resolved defaults ending in a loss exit; `severity_pct` "
         "loss / EAD of the reported loss exits; `lgd_pct` loss / EAD over resolved defaults; "
