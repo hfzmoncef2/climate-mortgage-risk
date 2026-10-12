@@ -37,3 +37,8 @@ gbm:                         # LightGBM challenger (same features as the scoreca
 
 calibration:
   bins: 10                   # equal-count bins of predicted PD for the reliability table
+
+ttc:                         # through-the-cycle anchoring of the final scorecard
+  fit_splits: [train, validation]   # the final model is refitted on 2004-2018
+  # long-run default rate = simple average of the yearly (vintage) default rates, so that
+  # large vintages do not dominate; the PDs are shifted (ranking unchanged) to match it
